@@ -2,9 +2,11 @@ from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Session
 
 from app.core.errors import BusinessConflict, InvalidData, ResourceNotFound
 from app.core.permissions import require_registry_writer
+from app.core.repositories import ClinicContext
 from app.modules.clinics.models import User
 from app.modules.patients.models import Patient, TutorPatient
 from app.modules.patients.repositories import LinkRepository, PatientRepository
@@ -20,6 +22,14 @@ from app.modules.tutors.services import TutorService
 
 
 class PatientService:
+    @classmethod
+    def for_clinic(cls, session: Session, context: ClinicContext) -> "PatientService":
+        return cls(
+            PatientRepository(session, context),
+            LinkRepository(session, context),
+            TutorService.for_clinic(session, context),
+        )
+
     def __init__(
         self, repository: PatientRepository, links: LinkRepository, tutors: TutorService
     ) -> None:
@@ -27,8 +37,14 @@ class PatientService:
         self.links = links
         self.tutors = tutors
 
-    def get(self, patient_id: UUID, *, lock: bool = False) -> Patient:
-        patient = self.repository.locked(patient_id) if lock else self.repository.get(patient_id)
+    def get(
+        self, patient_id: UUID, *, lock: bool = False, include_archived: bool = False
+    ) -> Patient:
+        patient = (
+            self.repository.locked(patient_id)
+            if lock
+            else self.repository.get(patient_id, include_archived=include_archived)
+        )
         if patient is None:
             raise ResourceNotFound("Paciente não encontrado.")
         return patient

@@ -44,6 +44,13 @@ class UserRepository(TenantRepository[User]):
         query = self._select().where(User.role == Role.ADMIN, User.active.is_(True)).subquery()
         return self.session.scalar(select(func.count()).select_from(query)) or 0
 
+    def veterinarians(self) -> Sequence[User]:
+        return self.session.scalars(
+            self._select()
+            .where(User.role == Role.VETERINARIAN, User.active.is_(True))
+            .order_by(User.name, User.id)
+        ).all()
+
     def save(self, user: User) -> None:
         self.session.add(user)
         self.session.flush()

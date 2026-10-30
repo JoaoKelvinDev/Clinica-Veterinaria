@@ -438,6 +438,27 @@ textarea {
 .link-list p {
   margin-bottom: 0;
 }
+.status-tag {
+  display: inline-block;
+  padding: 5px 9px;
+  background: #edf2e8;
+  border-radius: 12px;
+  font-size: 12px;
+}
+.status-tag.in_progress {
+  background: #e5effc;
+  color: #214c7b;
+}
+.status-tag.completed,
+.status-tag.confirmed {
+  background: #e2f1e6;
+  color: #205f42;
+}
+.status-tag.cancelled,
+.status-tag.no_show {
+  background: #f9ece5;
+  color: #81311e;
+}
 @media (max-width: 760px) {
   .panel {
     padding: 22px;

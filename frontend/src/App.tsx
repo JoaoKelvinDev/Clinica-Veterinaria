@@ -8,6 +8,7 @@ import { HealthStatus } from './HealthStatus';
 import { UserAdministration } from './UserAdministration';
 import { Tutors } from './Tutors';
 import { Patients } from './Patients';
+import { Scheduling } from './Scheduling';
 
 export function App({ auth = defaultAuth }: { auth?: AuthGateway | null }) {
   const [session, setSession] = useState<AuthSession | null>(null);
@@ -15,7 +16,7 @@ export function App({ auth = defaultAuth }: { auth?: AuthGateway | null }) {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const [view, setView] = useState<'clinic' | 'tutors' | 'patients'>('clinic');
+  const [view, setView] = useState<'clinic' | 'tutors' | 'patients' | 'scheduling'>('clinic');
   const revision = useRef(0);
   const invalidateRequests = useCallback(() => {
     revision.current++;
@@ -164,6 +165,13 @@ export function App({ auth = defaultAuth }: { auth?: AuthGateway | null }) {
             </section>
             <nav className="workspace-nav" aria-label="Áreas da clínica">
               <button
+                className={view === 'scheduling' ? '' : 'secondary'}
+                aria-current={view === 'scheduling' ? 'page' : undefined}
+                onClick={() => setView('scheduling')}
+              >
+                Agenda
+              </button>
+              <button
                 className={view === 'clinic' ? '' : 'secondary'}
                 aria-current={view === 'clinic' ? 'page' : undefined}
                 onClick={() => setView('clinic')}
@@ -185,6 +193,9 @@ export function App({ auth = defaultAuth }: { auth?: AuthGateway | null }) {
                 Animais
               </button>
             </nav>
+            {view === 'scheduling' && (
+              <Scheduling token={session.access_token} user={identity.user} />
+            )}
             {view === 'tutors' && (
               <Tutors
                 token={session.access_token}

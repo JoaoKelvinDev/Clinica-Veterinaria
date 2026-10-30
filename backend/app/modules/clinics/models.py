@@ -1,7 +1,7 @@
 from enum import StrEnum
 from uuid import UUID
 
-from sqlalchemy import Boolean, CheckConstraint, Enum, ForeignKey, String
+from sqlalchemy import Boolean, CheckConstraint, Enum, ForeignKey, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.db import TenantModel
@@ -27,6 +27,7 @@ class Clinic(TenantModel):
 class User(TenantModel):
     __tablename__ = "users"
     __table_args__ = (
+        UniqueConstraint("clinic_id", "id", name="uq_user_clinic_id"),
         CheckConstraint(
             "role <> 'veterinarian' OR (crmv IS NOT NULL AND crmv_state IS NOT NULL)",
             name="veterinarian_has_crmv",

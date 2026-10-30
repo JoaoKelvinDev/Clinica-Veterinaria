@@ -33,12 +33,20 @@ def test_migration_can_upgrade_downgrade_and_upgrade() -> None:
             ).fetchall()
             assert sorted(rows) == [
                 (name, True)
-                for name in ("clinics", "patients", "tutor_patients", "tutors", "users")
+                for name in (
+                    "appointments",
+                    "clinics",
+                    "encounters",
+                    "patients",
+                    "tutor_patients",
+                    "tutors",
+                    "users",
+                )
             ]
             policies = connection.execute(
                 "SELECT qual, with_check FROM pg_policies WHERE schemaname = 'vetsys'"
             ).fetchall()
-            assert len(policies) == 13
+            assert len(policies) == 19
             assert all("SELECT" in (qual or check) for qual, check in policies)
     finally:
         os.environ["MIGRATION_DATABASE_URL"] = original

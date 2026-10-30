@@ -45,6 +45,7 @@ def authenticated_context(
                 raise AccessDenied("Usuário sem acesso ativo a uma clínica.")
             set_context(session, "vetsys.clinic_id", str(actor.clinic_id))
             set_context(session, "vetsys.role", actor.role.value)
+            set_context(session, "vetsys.user_id", str(actor.id))
             clinic = ClinicContext(actor.clinic_id)
             ClinicService(ClinicRepository(session, clinic)).current()
             yield AuthenticatedContext(session, actor, clinic)

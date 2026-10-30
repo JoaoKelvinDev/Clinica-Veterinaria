@@ -43,6 +43,15 @@ class UserService:
         require_admin(actor)
         return self.repository.list()
 
+    def veterinarian(self, user_id: UUID, *, require_active: bool = True) -> User:
+        user = self.repository.get(user_id, include_archived=not require_active)
+        if user is None or (require_active and (not user.active or user.role != Role.VETERINARIAN)):
+            raise ResourceNotFound("Veterinário ativo não encontrado nesta clínica.")
+        return user
+
+    def veterinarians(self) -> Sequence[User]:
+        return self.repository.veterinarians()
+
     def get(self, actor: User, user_id: UUID) -> User:
         require_admin(actor)
         user = self.repository.get(user_id)

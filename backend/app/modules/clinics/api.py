@@ -38,6 +38,11 @@ def clinic_services(auth: AuthContext) -> RequestContext:
 Context = Annotated[RequestContext, Depends(clinic_services)]
 
 
+@router.get("/veterinarians", response_model=list[UserRead])
+def veterinarians(context: Context) -> list[UserRead]:
+    return [UserRead.model_validate(user) for user in context.users.veterinarians()]
+
+
 @router.get("/me", response_model=IdentityRead)
 def me(context: Context) -> IdentityRead:
     return IdentityRead(
