@@ -1,0 +1,1 @@
+"""Aplicação do Sistema Veterinário."""

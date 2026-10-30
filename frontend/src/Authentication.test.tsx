@@ -1,0 +1,123 @@
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
+import { App } from './App';
+import type { AuthGateway, AuthSession } from './auth';
+import { parseUser } from './api';
+
+const admin = {
+  id: 'user-a',
+  clinic_id: 'clinic-a',
+  name: 'Administrador fictício',
+  role: 'admin',
+  active: true,
+  crmv: null,
+  crmv_state: null,
+};
+const reception = { ...admin, id: 'user-r', name: 'Recepção fictícia', role: 'reception' };
+const clinic = { id: 'clinic-a', name: 'Clínica fictícia' };
+const session = { access_token: 'fictitious-token' };
+
+function gateway(initial: AuthSession | null = null) {
+  return {
+    getSession: vi.fn().mockResolvedValue(initial),
+    signIn: vi.fn().mockResolvedValue(session),
+    signOut: vi.fn().mockResolvedValue(undefined),
+    subscribe: vi.fn(() => vi.fn()),
+  } satisfies AuthGateway;
+}
+function mockApi(user = admin) {
+  const fetchMock = vi.fn(async (input: string, init?: RequestInit) => {
+    if (input === '/api/health') return new Response(JSON.stringify({ status: 'ok' }));
+    if (input === '/api/me') return new Response(JSON.stringify({ user, clinic }));
+    if (input === '/api/users') return new Response(JSON.stringify([admin, reception]));
+    if (input === '/api/users/user-r' && init?.method === 'PATCH') {
+      return new Response(JSON.stringify({ ...reception, active: false }));
+    }
+    return new Response('{}', { status: 404 });
+  });
+  vi.stubGlobal('fetch', fetchMock);
+  return fetchMock;
+}
+async function enter() {
+  fireEvent.change(await screen.findByLabelText('E-mail'), {
+    target: { value: 'ficticio@example.test' },
+  });
+  fireEvent.change(screen.getByLabelText('Senha'), { target: { value: 'fictitious-password' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Entrar' }));
+}
+
+describe('Autenticação e permissões', () => {
+  it('entra, apresenta a clínica e encerra a sessão sem manter seus dados', async () => {
+    const auth = gateway();
+    mockApi();
+    render(<App auth={auth} />);
+    await enter();
+    expect(await screen.findByRole('heading', { name: clinic.name })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Equipe da clínica' })).toBeInTheDocument();
+    expect(auth.signIn).toHaveBeenCalledWith('ficticio@example.test', 'fictitious-password');
+    fireEvent.click(screen.getByRole('button', { name: 'Sair' }));
+    expect(await screen.findByRole('button', { name: 'Entrar' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: clinic.name })).not.toBeInTheDocument();
+    expect(auth.signOut).toHaveBeenCalledOnce();
+  });
+
+  it('exibe erro de credenciais sem abrir a clínica', async () => {
+    const auth = gateway();
+    auth.signIn.mockRejectedValue(new Error('Confira o e-mail e a senha.'));
+    mockApi();
+    render(<App auth={auth} />);
+    await enter();
+    expect(await screen.findByRole('alert')).toHaveTextContent('Confira o e-mail e a senha.');
+    expect(screen.queryByRole('heading', { name: clinic.name })).not.toBeInTheDocument();
+  });
+
+  it('não disponibiliza administração para recepção', async () => {
+    mockApi(reception);
+    render(<App auth={gateway(session)} />);
+    expect(await screen.findByRole('heading', { name: clinic.name })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Equipe da clínica' })).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Nome da clínica')).not.toBeInTheDocument();
+  });
+
+  it('nega o acesso quando o backend bloqueia um usuário', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(
+        async (input: string) =>
+          new Response(
+            JSON.stringify(
+              input === '/api/health'
+                ? { status: 'ok' }
+                : { error: { message: 'Usuário sem acesso ativo.' } },
+            ),
+            { status: input === '/api/health' ? 200 : 403 },
+          ),
+      ),
+    );
+    render(<App auth={gateway(session)} />);
+    expect(await screen.findByRole('alert')).toHaveTextContent('Usuário sem acesso ativo.');
+    expect(screen.queryByRole('heading', { name: clinic.name })).not.toBeInTheDocument();
+  });
+
+  it('permite ao administrador desativar um usuário', async () => {
+    const fetchMock = mockApi();
+    render(<App auth={gateway(session)} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Editar Recepção fictícia' }));
+    fireEvent.click(screen.getByLabelText('Usuário ativo'));
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar alterações' }));
+    await waitFor(() =>
+      expect(fetchMock).toHaveBeenCalledWith(
+        '/api/users/user-r',
+        expect.objectContaining({
+          method: 'PATCH',
+          headers: expect.objectContaining({ Authorization: 'Bearer fictitious-token' }),
+          body: expect.stringContaining('"active":false'),
+        }),
+      ),
+    );
+  });
+
+  it('rejeita papéis desconhecidos na resposta do backend', () => {
+    expect(() => parseUser({ ...admin, role: '__proto__' })).toThrow('dados inválidos');
+  });
+});

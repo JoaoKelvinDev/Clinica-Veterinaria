@@ -1,0 +1,16 @@
+{
+  "name": "vetsys-dev",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "db:start": "node scripts/start-local.mjs",
+    "db:stop": "supabase stop",
+    "db:status": "supabase status",
+    "setup": "node scripts/setup-local.mjs",
+    "dev": "node scripts/dev-local.mjs",
+    "check:backend": "node scripts/check-backend.mjs"
+  },
+  "devDependencies": {
+    "supabase": "2.122.0"
+  }
+}
