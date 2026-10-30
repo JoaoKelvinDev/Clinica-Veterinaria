@@ -1,33 +1,11 @@
 from collections.abc import Sequence
-from dataclasses import dataclass
 from uuid import UUID
 
-from sqlalchemy import Select, func, select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.core.db import TenantModel
+from app.core.repositories import ClinicContext, TenantRepository
 from app.modules.clinics.models import Clinic, Role, User
-
-
-@dataclass(frozen=True)
-class ClinicContext:
-    clinic_id: UUID
-
-
-class TenantRepository[ModelT: TenantModel]:
-    def __init__(self, session: Session, context: ClinicContext, model: type[ModelT]) -> None:
-        self.session = session
-        self.context = context
-        self.model = model
-
-    def _select(self) -> Select[ModelT]:
-        return select(self.model).where(
-            self.model.clinic_id == self.context.clinic_id,
-            self.model.deleted_at.is_(None),
-        )
-
-    def get(self, entity_id: UUID) -> ModelT | None:
-        return self.session.scalar(self._select().where(self.model.id == entity_id))
 
 
 class IdentityRepository:

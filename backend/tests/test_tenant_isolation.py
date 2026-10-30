@@ -4,8 +4,9 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from app.core.db import set_context, verify_runtime_role
 from app.core.errors import ServiceUnavailable
+from app.core.repositories import ClinicContext
 from app.modules.clinics.models import User
-from app.modules.clinics.repositories import ClinicContext, ClinicRepository, UserRepository
+from app.modules.clinics.repositories import ClinicRepository, UserRepository
 from tests.conftest import DatabaseFixture, FixtureData
 
 

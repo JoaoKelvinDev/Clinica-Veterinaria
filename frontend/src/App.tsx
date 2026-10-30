@@ -6,6 +6,8 @@ import { defaultAuth } from './auth';
 import type { AuthGateway, AuthSession } from './auth';
 import { HealthStatus } from './HealthStatus';
 import { UserAdministration } from './UserAdministration';
+import { Tutors } from './Tutors';
+import { Patients } from './Patients';
 
 export function App({ auth = defaultAuth }: { auth?: AuthGateway | null }) {
   const [session, setSession] = useState<AuthSession | null>(null);
@@ -13,6 +15,7 @@ export function App({ auth = defaultAuth }: { auth?: AuthGateway | null }) {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [view, setView] = useState<'clinic' | 'tutors' | 'patients'>('clinic');
   const revision = useRef(0);
   const invalidateRequests = useCallback(() => {
     revision.current++;
@@ -88,6 +91,7 @@ export function App({ auth = defaultAuth }: { auth?: AuthGateway | null }) {
     setError('');
     try {
       await auth.signOut();
+      setView('clinic');
       await applySession(null);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'Não foi possível sair.');
@@ -158,52 +162,90 @@ export function App({ auth = defaultAuth }: { auth?: AuthGateway | null }) {
                 <span className="role-tag">{roleLabels[identity.user.role]}</span>
               </p>
             </section>
-            {identity.user.role === 'admin' ? (
-              <>
-                <section className="panel">
-                  <h2>Dados da clínica</h2>
-                  <form
-                    className="clinic-form"
-                    key={identity.clinic.name}
-                    onSubmit={(event) => {
-                      void renameClinic(event);
-                    }}
-                  >
-                    <label>
-                      Nome da clínica
-                      <input
-                        name="clinicName"
-                        required
-                        maxLength={200}
-                        defaultValue={identity.clinic.name}
-                      />
-                    </label>
-                    <button disabled={busy}>Salvar nome</button>
-                  </form>
-                </section>
-                <UserAdministration
-                  token={session.access_token}
-                  onIdentityChanged={() => {
-                    void applySession(session);
-                  }}
-                />
-              </>
-            ) : (
-              <section className="panel">
-                <h2>Bem-vindo à sua clínica</h2>
-                <p>
-                  Seu acesso está ativo. As funcionalidades de atendimento serão disponibilizadas
-                  nas próximas etapas.
-                </p>
-              </section>
+            <nav className="workspace-nav" aria-label="Áreas da clínica">
+              <button
+                className={view === 'clinic' ? '' : 'secondary'}
+                aria-current={view === 'clinic' ? 'page' : undefined}
+                onClick={() => setView('clinic')}
+              >
+                Clínica e equipe
+              </button>
+              <button
+                className={view === 'tutors' ? '' : 'secondary'}
+                aria-current={view === 'tutors' ? 'page' : undefined}
+                onClick={() => setView('tutors')}
+              >
+                Tutores
+              </button>
+              <button
+                className={view === 'patients' ? '' : 'secondary'}
+                aria-current={view === 'patients' ? 'page' : undefined}
+                onClick={() => setView('patients')}
+              >
+                Animais
+              </button>
+            </nav>
+            {view === 'tutors' && (
+              <Tutors
+                token={session.access_token}
+                canWrite={identity.user.role === 'admin' || identity.user.role === 'reception'}
+              />
             )}
+            {view === 'patients' && (
+              <Patients
+                token={session.access_token}
+                canWrite={identity.user.role === 'admin' || identity.user.role === 'reception'}
+              />
+            )}
+            {view === 'clinic' &&
+              (identity.user.role === 'admin' ? (
+                <>
+                  <section className="panel">
+                    <h2>Dados da clínica</h2>
+                    <form
+                      className="clinic-form"
+                      key={identity.clinic.name}
+                      onSubmit={(event) => {
+                        void renameClinic(event);
+                      }}
+                    >
+                      <label>
+                        Nome da clínica
+                        <input
+                          name="clinicName"
+                          required
+                          maxLength={200}
+                          defaultValue={identity.clinic.name}
+                        />
+                      </label>
+                      <button disabled={busy}>Salvar nome</button>
+                    </form>
+                  </section>
+                  <UserAdministration
+                    token={session.access_token}
+                    onIdentityChanged={() => {
+                      void applySession(session);
+                    }}
+                  />
+                </>
+              ) : (
+                <section className="panel">
+                  <h2>Bem-vindo à sua clínica</h2>
+                  <p>
+                    Seu acesso está ativo. As funcionalidades de atendimento serão disponibilizadas
+                    nas próximas etapas.
+                  </p>
+                </section>
+              ))}
           </>
         ) : !session ? (
           <>
             <section className="welcome">
               <p className="eyebrow">MAIS TEMPO PARA CUIDAR</p>
               <h1>O cuidado começa com uma rotina mais simples.</h1>
-              <p className="intro">Acesse o espaço da sua clínica para organizar a equipe.</p>
+              <p className="intro">
+                Acesse o espaço da sua clínica para organizar a equipe, os tutores e os pacientes.
+              </p>
             </section>
             <section className="panel login-panel">
               <h2>Entre na sua clínica</h2>

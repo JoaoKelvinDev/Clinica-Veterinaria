@@ -64,7 +64,12 @@ class FixtureData:
 @pytest.fixture
 def data(database: DatabaseFixture) -> FixtureData:
     with database.admin.begin() as connection:
-        connection.execute(text("TRUNCATE vetsys.users, vetsys.clinics"))
+        connection.execute(
+            text(
+                "TRUNCATE vetsys.tutor_patients, vetsys.patients, vetsys.tutors, "
+                "vetsys.users, vetsys.clinics"
+            )
+        )
     with Session(database.admin, expire_on_commit=False) as session:
         a, b = uuid4(), uuid4()
         clinic_a = Clinic(id=a, clinic_id=a, name="Clínica fictícia A")

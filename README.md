@@ -1,6 +1,6 @@
 # Sistema Veterinário
 
-Aplicação para clínicas veterinárias pequenas no Brasil. Etapas implementadas: fundação e clínica, usuários, autenticação e isolamento entre clínicas. Ainda não há tutores, animais, agenda ou prontuário.
+Aplicação para clínicas veterinárias pequenas no Brasil. Etapas implementadas: fundação; clínica, usuários e autenticação; tutores e animais. Agenda, prontuário e os demais módulos serão desenvolvidos em etapas próprias.
 
 ## Ambiente gratuito e local
 
@@ -56,6 +56,16 @@ Papéis: `admin`, `veterinarian`, `assistant`, `reception`. Veterinários exigem
 
 Para a verificação desta entrega, foram provisionadas duas clínicas fictícias. O acesso de demonstração está em `.cache/acesso-local.txt`, apenas neste computador, ignorado pelo Git. Senhas não são fixadas no código ou nesta documentação. Quem clonar o repositório deve usar o comando de provisionamento acima.
 
+## Tutores e animais — Etapa 2
+
+Após entrar, abra **Tutores** ou **Animais**. Administradores e recepção cadastram, alteram e arquivam; veterinários e auxiliares consultam. O backend e o banco também verificam as permissões.
+
+Em Tutores, busque por nome ou telefone. O telefone é opcional e normalizado para E.164; números nacionais usam Brasil como região padrão. Documento e endereço são opcionais. Autorizar WhatsApp exige telefone e origem da autorização, com data registrada pelo servidor. Trocar o telefone revoga a autorização; registre outra somente se o tutor a conceder. Nenhuma mensagem é enviada nesta etapa.
+
+Em Animais, busque por nome ou microchip. Nome e espécie são obrigatórios; os demais campos são opcionais. Informe nascimento ou idade estimada em meses. O microchip é único entre pacientes ativos da mesma clínica. Ao salvar ou abrir “Tutores de…”, vincule os responsáveis: um tutor pode cuidar de vários pacientes, e cada paciente pode ter vários tutores. O primeiro vínculo é principal; é possível escolher outro. Remover o principal não escolhe automaticamente um substituto.
+
+Arquivar preserva o cadastro. Tutores arquivados permanecem nos vínculos anteriores, identificados como arquivados, com autorização revogada; não são oferecidos para novos vínculos. Esta entrega não inclui restauração de cadastros ou consulta de pacientes arquivados pela interface.
+
 ## Autenticação e isolamento
 
 O frontend autentica pelo cliente oficial Supabase e envia o token à API. A API verifica a identidade com o servidor Auth e consulta o perfil ativo, sua clínica e papel no banco em cada requisição. Não aceita clínica ou papel informados pelo cliente para autorizar acesso.
@@ -78,7 +88,7 @@ Em terminais separados, depois de parar os containers da aplicação com `docker
 ```powershell
 # Em backend/
 uv sync --frozen
-uv run --env-file ../.env --frozen uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+uv run --env-file ../.env --frozen uvicorn app.main:app --reload --host 127.0.0.1 --port 8000 --no-access-log
 
 # Em frontend/
 npm ci
@@ -117,7 +127,7 @@ npm run build
 Diagnóstico de segurança local, na raiz:
 
 ```powershell
-npx supabase db advisors --local --type security --level warn --fail-on error
+npx supabase db advisors --local --type all --level warn --fail-on warn
 ```
 
 ## Migrações e configuração
@@ -136,4 +146,6 @@ Não execute downgrade no banco com dados que precisam ser preservados: o downgr
 
 Ambiente exclusivo de desenvolvimento local, sem HTTPS e sem deploy. Recuperação de senha, convites, edição de e-mail/senha pela interface e múltiplas clínicas por usuário ficam fora desta entrega. A migração para projeto hospedado depende de decisão futura e confirmação de custo zero ou nova autorização.
 
-Os resultados executados e a limitação de revisão visual estão em `docs/etapa-1-verificacao.md`. As decisões aprovadas estão em `docs/decisions/`. O aviso de depreciação HTTPX/TestClient continua documentado; os testes passam sem ocultá-lo.
+Os resultados executados e a limitação de revisão visual estão em `docs/etapa-1-verificacao.md` e `docs/etapa-2-verificacao.md`. As decisões aprovadas estão em `docs/decisions/`. O aviso de depreciação HTTPX/TestClient continua documentado; os testes passam sem ocultá-lo.
+
+Os commits e o envio ao repositório `JoaoKelvinDev/Clinica-Veterinaria` ficam com o responsável. A relação de arquivos e as instruções para separar as duas entregas estão em `docs/arquivos-por-etapa.md`. A parte financeira empresarial será planejada depois da etapa em andamento, conforme orientação do responsável; não foi implementada nesta entrega.

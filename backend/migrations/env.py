@@ -5,6 +5,8 @@ from sqlalchemy import create_engine, pool, text
 
 from app.core.db import Base
 from app.modules.clinics import models  # noqa: F401
+from app.modules.patients import models as patient_models  # noqa: F401
+from app.modules.tutors import models as tutor_models  # noqa: F401
 
 config = context.config
 url = os.environ.get("MIGRATION_DATABASE_URL") or config.get_main_option("sqlalchemy.url")

@@ -29,14 +29,17 @@ def test_migration_can_upgrade_downgrade_and_upgrade() -> None:
         with psycopg.connect(dsn) as connection:
             rows = connection.execute(
                 "SELECT tablename, rowsecurity FROM pg_tables "
-                "WHERE schemaname = 'vetsys' AND tablename IN ('users', 'clinics')"
+                "WHERE schemaname = 'vetsys' AND tablename <> 'alembic_version'"
             ).fetchall()
-            assert sorted(rows) == [("clinics", True), ("users", True)]
+            assert sorted(rows) == [
+                (name, True)
+                for name in ("clinics", "patients", "tutor_patients", "tutors", "users")
+            ]
             policies = connection.execute(
                 "SELECT qual, with_check FROM pg_policies WHERE schemaname = 'vetsys'"
             ).fetchall()
-            assert len(policies) == 4
-            assert all("SELECT" in qual for qual, _check in policies)
+            assert len(policies) == 13
+            assert all("SELECT" in (qual or check) for qual, check in policies)
     finally:
         os.environ["MIGRATION_DATABASE_URL"] = original
         with psycopg.connect(admin_dsn, autocommit=True) as connection:

@@ -65,9 +65,14 @@ export function parseIdentity(value: unknown): Identity {
   return { user, clinic: { id: value.clinic.id, name: value.clinic.name } };
 }
 
-export async function apiRequest(token: string, path: string, changes?: unknown): Promise<unknown> {
+export async function apiRequest(
+  token: string,
+  path: string,
+  changes?: unknown,
+  method?: 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE',
+): Promise<unknown> {
   const response = await fetch(`/api${path}`, {
-    method: changes === undefined ? 'GET' : 'PATCH',
+    method: method ?? (changes === undefined ? 'GET' : 'PATCH'),
     headers: {
       Authorization: `Bearer ${token}`,
       ...(changes === undefined ? {} : { 'Content-Type': 'application/json' }),
@@ -75,6 +80,7 @@ export async function apiRequest(token: string, path: string, changes?: unknown)
     ...(changes === undefined ? {} : { body: JSON.stringify(changes) }),
     signal: AbortSignal.timeout(10000),
   });
+  if (response.status === 204 && response.ok) return null;
   const body: unknown = await response.json();
   if (!response.ok) {
     if (object(body) && object(body.error) && typeof body.error.message === 'string')
