@@ -495,7 +495,7 @@ export function Scheduling({ token, user }: { token: string; user: UserProfile }
         <p>Nenhum agendamento neste dia.</p>
       ) : (
         <div className="table-scroll">
-          <table>
+          <table className="agenda">
             <thead>
               <tr>
                 <th>Horário</th>
@@ -599,7 +599,7 @@ export function Scheduling({ token, user }: { token: string; user: UserProfile }
         <p>Nenhum atendimento iniciado neste dia.</p>
       ) : (
         <div className="table-scroll">
-          <table>
+          <table className="agenda">
             <thead>
               <tr>
                 <th>Paciente / profissional</th>

@@ -10,13 +10,21 @@ import { Tutors } from './Tutors';
 import { Patients } from './Patients';
 import { Scheduling } from './Scheduling';
 
+type View = 'clinic' | 'tutors' | 'patients' | 'scheduling';
+const navItems: [View, string][] = [
+  ['scheduling', 'Agenda'],
+  ['tutors', 'Tutores'],
+  ['patients', 'Animais'],
+  ['clinic', 'Clínica e equipe'],
+];
+
 export function App({ auth = defaultAuth }: { auth?: AuthGateway | null }) {
   const [session, setSession] = useState<AuthSession | null>(null);
   const [identity, setIdentity] = useState<Identity | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const [view, setView] = useState<'clinic' | 'tutors' | 'patients' | 'scheduling'>('clinic');
+  const [view, setView] = useState<View>('clinic');
   const revision = useRef(0);
   const invalidateRequests = useCallback(() => {
     revision.current++;
@@ -117,182 +125,180 @@ export function App({ auth = defaultAuth }: { auth?: AuthGateway | null }) {
     }
   }
 
+  const brand = (
+    <a className="brand" href="/" aria-label="Sistema Veterinário — início">
+      <span className="brand-mark" aria-hidden="true">
+        +
+      </span>
+      Sistema Veterinário
+    </a>
+  );
+  const logoutButton = session && (
+    <button
+      type="button"
+      className="secondary"
+      disabled={busy}
+      onClick={() => {
+        void logout();
+      }}
+    >
+      Sair
+    </button>
+  );
+  const errorMessage = error && (
+    <p role="alert" className="form-error">
+      {error}
+    </p>
+  );
+
+  if (!loading && identity && session) {
+    const { user, clinic } = identity;
+    return (
+      <div className="shell">
+        <aside className="sidebar">
+          {brand}
+          <div className="identity">
+            <h1>{clinic.name}</h1>
+            <p>
+              {user.name}
+              <span className="role-tag">{roleLabels[user.role]}</span>
+            </p>
+            {user.crmv && (
+              <span className="stamp crmv">
+                CRMV-{user.crmv_state} {user.crmv}
+              </span>
+            )}
+          </div>
+          <nav className="workspace-nav" aria-label="Áreas da clínica">
+            {navItems.map(([key, label]) => (
+              <button
+                key={key}
+                className="nav-item"
+                aria-current={view === key ? 'page' : undefined}
+                onClick={() => setView(key)}
+              >
+                {label}
+              </button>
+            ))}
+          </nav>
+          <div className="sidebar-foot">
+            {logoutButton}
+            <span className="environment">Desenvolvimento local</span>
+            <HealthStatus />
+          </div>
+        </aside>
+        <main className="workspace">
+          {errorMessage}
+          {view === 'scheduling' && <Scheduling token={session.access_token} user={user} />}
+          {view === 'tutors' && (
+            <Tutors
+              token={session.access_token}
+              canWrite={user.role === 'admin' || user.role === 'reception'}
+            />
+          )}
+          {view === 'patients' && (
+            <Patients
+              token={session.access_token}
+              canWrite={user.role === 'admin' || user.role === 'reception'}
+            />
+          )}
+          {view === 'clinic' &&
+            (user.role === 'admin' ? (
+              <>
+                <section className="panel">
+                  <h2>Dados da clínica</h2>
+                  <form
+                    className="clinic-form"
+                    key={clinic.name}
+                    onSubmit={(event) => {
+                      void renameClinic(event);
+                    }}
+                  >
+                    <label>
+                      Nome da clínica
+                      <input
+                        name="clinicName"
+                        required
+                        maxLength={200}
+                        defaultValue={clinic.name}
+                      />
+                    </label>
+                    <button disabled={busy}>Salvar nome</button>
+                  </form>
+                </section>
+                <UserAdministration
+                  token={session.access_token}
+                  onIdentityChanged={() => {
+                    void applySession(session);
+                  }}
+                />
+              </>
+            ) : (
+              <section className="panel">
+                <h2>Bem-vindo à sua clínica</h2>
+                <p>
+                  Seu acesso está ativo. As funcionalidades de atendimento serão disponibilizadas
+                  nas próximas etapas.
+                </p>
+              </section>
+            ))}
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="page">
       <header className="header">
-        <a className="brand" href="/" aria-label="Sistema Veterinário — início">
-          <span className="brand-mark" aria-hidden="true">
-            +
-          </span>
-          Sistema Veterinário
-        </a>
+        {brand}
         <div className="header-actions">
           <span className="environment">Desenvolvimento local</span>
-          {session && (
-            <button
-              type="button"
-              className="secondary"
-              disabled={busy}
-              onClick={() => {
-                void logout();
-              }}
-            >
-              Sair
-            </button>
-          )}
+          {logoutButton}
         </div>
       </header>
-      <main className={identity ? 'workspace' : 'login-layout'}>
-        {error && (
-          <p role="alert" className="form-error full-width">
-            {error}
-          </p>
-        )}
+      <main className="entry">
+        {errorMessage}
         {loading ? (
-          <section className="panel full-width">
+          <section className="panel">
             <h1>Preparando seu acesso</h1>
             <p role="status">Carregando sua clínica…</p>
           </section>
-        ) : identity && session ? (
-          <>
-            <section className="workspace-heading">
-              <p className="eyebrow">SUA CLÍNICA</p>
-              <h1>{identity.clinic.name}</h1>
-              <p>
-                Olá, {identity.user.name}.{' '}
-                <span className="role-tag">{roleLabels[identity.user.role]}</span>
-              </p>
-            </section>
-            <nav className="workspace-nav" aria-label="Áreas da clínica">
-              <button
-                className={view === 'scheduling' ? '' : 'secondary'}
-                aria-current={view === 'scheduling' ? 'page' : undefined}
-                onClick={() => setView('scheduling')}
-              >
-                Agenda
-              </button>
-              <button
-                className={view === 'clinic' ? '' : 'secondary'}
-                aria-current={view === 'clinic' ? 'page' : undefined}
-                onClick={() => setView('clinic')}
-              >
-                Clínica e equipe
-              </button>
-              <button
-                className={view === 'tutors' ? '' : 'secondary'}
-                aria-current={view === 'tutors' ? 'page' : undefined}
-                onClick={() => setView('tutors')}
-              >
-                Tutores
-              </button>
-              <button
-                className={view === 'patients' ? '' : 'secondary'}
-                aria-current={view === 'patients' ? 'page' : undefined}
-                onClick={() => setView('patients')}
-              >
-                Animais
-              </button>
-            </nav>
-            {view === 'scheduling' && (
-              <Scheduling token={session.access_token} user={identity.user} />
-            )}
-            {view === 'tutors' && (
-              <Tutors
-                token={session.access_token}
-                canWrite={identity.user.role === 'admin' || identity.user.role === 'reception'}
-              />
-            )}
-            {view === 'patients' && (
-              <Patients
-                token={session.access_token}
-                canWrite={identity.user.role === 'admin' || identity.user.role === 'reception'}
-              />
-            )}
-            {view === 'clinic' &&
-              (identity.user.role === 'admin' ? (
-                <>
-                  <section className="panel">
-                    <h2>Dados da clínica</h2>
-                    <form
-                      className="clinic-form"
-                      key={identity.clinic.name}
-                      onSubmit={(event) => {
-                        void renameClinic(event);
-                      }}
-                    >
-                      <label>
-                        Nome da clínica
-                        <input
-                          name="clinicName"
-                          required
-                          maxLength={200}
-                          defaultValue={identity.clinic.name}
-                        />
-                      </label>
-                      <button disabled={busy}>Salvar nome</button>
-                    </form>
-                  </section>
-                  <UserAdministration
-                    token={session.access_token}
-                    onIdentityChanged={() => {
-                      void applySession(session);
-                    }}
-                  />
-                </>
-              ) : (
-                <section className="panel">
-                  <h2>Bem-vindo à sua clínica</h2>
-                  <p>
-                    Seu acesso está ativo. As funcionalidades de atendimento serão disponibilizadas
-                    nas próximas etapas.
-                  </p>
-                </section>
-              ))}
-          </>
         ) : !session ? (
-          <>
-            <section className="welcome">
-              <p className="eyebrow">MAIS TEMPO PARA CUIDAR</p>
-              <h1>O cuidado começa com uma rotina mais simples.</h1>
-              <p className="intro">
-                Acesse o espaço da sua clínica para organizar a equipe, os tutores e os pacientes.
-              </p>
-            </section>
-            <section className="panel login-panel">
-              <h2>Entre na sua clínica</h2>
-              {!auth && <p role="alert">O acesso ainda não está configurado neste ambiente.</p>}
-              <form
-                onSubmit={(event) => {
-                  void login(event);
-                }}
-              >
-                <label>
-                  E-mail
-                  <input
-                    name="email"
-                    type="email"
-                    autoComplete="username"
-                    required
-                    disabled={!auth || busy}
-                  />
-                </label>
-                <label>
-                  Senha
-                  <input
-                    name="password"
-                    type="password"
-                    autoComplete="current-password"
-                    required
-                    disabled={!auth || busy}
-                  />
-                </label>
-                <button disabled={!auth || busy}>{busy ? 'Entrando…' : 'Entrar'}</button>
-              </form>
-              <p className="muted">Acesso exclusivo à equipe da clínica.</p>
-            </section>
-          </>
+          <section className="panel login-panel">
+            <h1>Entre na sua clínica</h1>
+            <p className="intro">Agenda, tutores e pacientes da sua equipe em um só lugar.</p>
+            {!auth && <p role="alert">O acesso ainda não está configurado neste ambiente.</p>}
+            <form
+              onSubmit={(event) => {
+                void login(event);
+              }}
+            >
+              <label>
+                E-mail
+                <input
+                  name="email"
+                  type="email"
+                  autoComplete="username"
+                  required
+                  disabled={!auth || busy}
+                />
+              </label>
+              <label>
+                Senha
+                <input
+                  name="password"
+                  type="password"
+                  autoComplete="current-password"
+                  required
+                  disabled={!auth || busy}
+                />
+              </label>
+              <button disabled={!auth || busy}>{busy ? 'Entrando…' : 'Entrar'}</button>
+            </form>
+            <p className="muted">Acesso exclusivo à equipe da clínica.</p>
+          </section>
         ) : (
-          <section className="panel full-width">
+          <section className="panel">
             <h1>Acesso indisponível</h1>
             <p>Consulte o administrador da sua clínica para verificar seu cadastro.</p>
           </section>
