@@ -104,6 +104,45 @@ class VaccineRead(BaseModel):
     created_at: datetime
 
 
+DocumentKind = Literal["lab_report", "external_history", "prescription", "other"]
+
+
+class DocumentCreate(Correction):
+    """Campos do formulário; o arquivo chega à parte, no mesmo envio."""
+
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+    kind: DocumentKind
+    origin_name: str = Field(min_length=1, max_length=200)
+    origin_crmv: str | None = Field(default=None, min_length=1, max_length=40)
+    document_date: date
+    summary: Text | None = None
+    encounter_id: UUID | None = None
+    keep_file: bool = False
+
+
+class DocumentRead(BaseModel):
+    id: UUID
+    patient_id: UUID
+    encounter_id: UUID | None
+    root_id: UUID
+    version: int
+    supersedes_id: UUID | None
+    correction_reason: str | None
+    kind: DocumentKind
+    origin_name: str
+    origin_crmv: str | None
+    document_date: date
+    summary: str | None
+    file_name: str | None
+    content_type: str | None
+    size_bytes: int | None
+    sha256: str | None
+    author_id: UUID
+    author_name: str
+    author_crmv: str | None
+    created_at: datetime
+
+
 class TimelineEncounter(BaseModel):
     id: UUID
     started_at: datetime
@@ -121,4 +160,5 @@ class PatientRecord(BaseModel):
     entries: list[RecordEntryRead]
     weights: list[WeightRead]
     vaccines: list[VaccineRead]
+    documents: list[DocumentRead]
     timezone: Literal["America/Fortaleza"] = "America/Fortaleza"

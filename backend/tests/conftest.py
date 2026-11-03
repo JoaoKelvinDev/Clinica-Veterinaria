@@ -18,6 +18,7 @@ from app.core.db import Database
 from app.core.errors import AuthenticationRequired
 from app.main import create_app
 from app.modules.clinics.models import Clinic, Role, User
+from app.providers.storage import MemoryFileStorage
 
 
 @dataclass
@@ -66,7 +67,8 @@ def data(database: DatabaseFixture) -> FixtureData:
     with database.admin.begin() as connection:
         connection.execute(
             text(
-                "TRUNCATE vetsys.audit_logs, vetsys.vaccine_records, vetsys.weight_records, "
+                "TRUNCATE vetsys.patient_documents, vetsys.audit_logs, vetsys.vaccine_records, "
+                "vetsys.weight_records, "
                 "vetsys.record_entries, vetsys.encounters, vetsys.appointments, "
                 "vetsys.tutor_patients, vetsys.patients, vetsys.tutors, "
                 "vetsys.users, vetsys.clinics"
@@ -121,6 +123,11 @@ def client(database: DatabaseFixture, data: FixtureData) -> Iterator[TestClient]
     provider = MockAuthProvider(
         {**{key: user.auth_id for key, user in data.users.items()}, "unassigned": uuid4()}
     )
-    application = create_app(Settings(), database=database.runtime, auth_provider=provider)
+    application = create_app(
+        Settings(),
+        database=database.runtime,
+        auth_provider=provider,
+        file_storage=MemoryFileStorage(),
+    )
     with TestClient(application) as test_client:
         yield test_client

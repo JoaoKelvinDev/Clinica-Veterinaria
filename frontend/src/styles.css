@@ -588,6 +588,9 @@ tbody tr:hover {
   max-width: 72ch;
   white-space: pre-wrap;
 }
+.document-summary {
+  white-space: pre-wrap;
+}
 .record-line p {
   margin: 0 0 4px;
   max-width: 72ch;

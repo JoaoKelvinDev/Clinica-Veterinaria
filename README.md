@@ -1,6 +1,6 @@
 # Sistema Veterinário
 
-Aplicação para clínicas veterinárias pequenas no Brasil. Etapas implementadas: fundação; clínica, usuários e autenticação; tutores e animais; agenda e atendimentos; prontuário. Anexos de laudos e os demais módulos serão desenvolvidos em etapas próprias.
+Aplicação para clínicas veterinárias pequenas no Brasil. Etapas implementadas: fundação; clínica, usuários e autenticação; tutores e animais; agenda e atendimentos; prontuário; documentos e laudos. Os demais módulos serão desenvolvidos em etapas próprias.
 
 ## Ambiente gratuito e local
 
@@ -27,7 +27,7 @@ Esse comando cria/verifica uma rede Docker que publica portas somente em `127.0.
 - Saúde da API: <http://localhost:8000/health> → `{"status":"ok"}`
 - Supabase Auth local: <http://127.0.0.1:54321/auth/v1>
 
-`/health` verifica somente a API, não o banco ou o Auth. Supabase Studio, Storage, Realtime e serviços de IA não são necessários nesta etapa e ficam desativados.
+`/health` verifica somente a API, não o banco ou o Auth. O Storage local guarda os anexos do prontuário num bucket privado, criado pelo `npm run dev`. Supabase Studio, Realtime e serviços de IA não são necessários e ficam desativados.
 
 Para parar, sem apagar dados:
 
@@ -82,7 +82,13 @@ Cada registro pertence a um atendimento e guarda data, hora, local, autor e CRMV
 
 Veterinários registram prontuário e vacinas; auxiliares registram peso; administradores e auxiliares consultam. A recepção vê apenas as datas dos atendimentos. Vacinas exigem nome, partida, fabricante, dose, fabricação e validade. Leituras e registros ficam na auditoria, sem conteúdo clínico.
 
-Ainda não há anexos de laudos, exportação em PDF ou assinatura com certificado digital.
+Ainda não há exportação em PDF ou assinatura com certificado digital.
+
+## Documentos e laudos — Etapa 4b
+
+No prontuário, em **Documentos e laudos**, veterinários e auxiliares usam **Adicionar documento** para laudos de exame, históricos de outros veterinários ou clínicas, receitas e outros documentos. Informe tipo, origem e data e anexe o arquivo, escreva um resumo ou faça os dois. Arquivos aceitos: PDF, JPG ou PNG de até 10 MB, conferidos pelo conteúdo.
+
+Os arquivos ficam no Supabase Storage local, num bucket privado; o navegador só os recebe pelo backend, que confere a permissão e a integridade (SHA-256). Nada é apagado: **Corrigir documento** cria uma nova versão e pode manter o arquivo anterior. A recepção não vê os documentos.
 
 ## Autenticação e isolamento
 

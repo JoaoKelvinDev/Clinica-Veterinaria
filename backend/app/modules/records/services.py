@@ -14,12 +14,14 @@ from app.modules.records.models import RecordEntry, VaccineRecord, WeightRecord
 from app.modules.records.repositories import (
     AppendOnlyRepository,
     AuditRepository,
+    DocumentRepository,
     RecordEntryRepository,
     Superseding,
     VaccineRepository,
     WeightRepository,
 )
 from app.modules.records.schemas import (
+    DocumentRead,
     PatientRecord,
     RecordEntryCreate,
     RecordEntryRead,
@@ -69,6 +71,7 @@ class RecordService:
             AuditRepository(session, context),
             SchedulingService.for_clinic(session, context),
             ClinicService(ClinicRepository(session, context)),
+            DocumentRepository(session, context),
         )
 
     def __init__(
@@ -79,6 +82,7 @@ class RecordService:
         audit: AuditRepository,
         scheduling: SchedulingService,
         clinics: ClinicService,
+        documents: DocumentRepository,
     ) -> None:
         self.entries = entries
         self.weights = weights
@@ -86,6 +90,7 @@ class RecordService:
         self.audit = audit
         self.scheduling = scheduling
         self.clinics = clinics
+        self.documents = documents
 
     def record(self, actor: User, patient_id: UUID) -> PatientRecord:
         self.scheduling.patients.get(patient_id, include_archived=True)
@@ -107,6 +112,7 @@ class RecordService:
                 entries=[],
                 weights=[],
                 vaccines=[],
+                documents=[],
             )
         self.audit.add(actor.id, "read", "patient_record", patient_id, patient_id)
         return PatientRecord(
@@ -124,6 +130,10 @@ class RecordService:
             vaccines=[
                 VaccineRead.model_validate(item, from_attributes=True)
                 for item in self.vaccines.current_for_patient(patient_id)
+            ],
+            documents=[
+                DocumentRead.model_validate(item, from_attributes=True)
+                for item in self.documents.current_for_patient(patient_id)
             ],
         )
 

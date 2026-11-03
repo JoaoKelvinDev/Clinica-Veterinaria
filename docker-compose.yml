@@ -7,6 +7,8 @@ services:
       DATABASE_URL: ${DOCKER_DATABASE_URL:-}
       SUPABASE_URL: ${DOCKER_SUPABASE_URL:-}
       SUPABASE_PUBLISHABLE_KEY: ${SUPABASE_PUBLISHABLE_KEY:-}
+      # Somente no servidor: usada para o Storage privado dos anexos.
+      SUPABASE_SECRET_KEY: ${SUPABASE_SECRET_KEY:-}
     ports:
       - "127.0.0.1:8000:8000"
     healthcheck:

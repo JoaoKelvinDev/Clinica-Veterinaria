@@ -115,9 +115,11 @@ port = 54324
 # sender_name = "Admin"
 
 [storage]
-enabled = false
+# Ligado para os anexos do prontuário (Etapa 4b). Local e gratuito; o backend
+# acessa com a chave secreta e o navegador nunca fala direto com o Storage.
+enabled = true
 # The maximum file size allowed (e.g. "5MB", "500KB").
-file_size_limit = "50MiB"
+file_size_limit = "10MiB"
 
 # Uncomment to configure local storage buckets
 # [storage.buckets.images]
@@ -128,7 +130,7 @@ file_size_limit = "50MiB"
 
 # Allow connections via S3 compatible clients
 [storage.s3_protocol]
-enabled = true
+enabled = false
 
 # Image transformation API is available to Supabase Pro plan.
 # [storage.image_transformation]

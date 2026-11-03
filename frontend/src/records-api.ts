@@ -60,6 +60,7 @@ export interface PatientRecord {
   entries: RecordEntry[];
   weights: WeightRecord[];
   vaccines: VaccineRecord[];
+  documents: PatientDocument[];
 }
 
 /** Campos de texto do registro, na ordem do art. 9º da Resolução CFMV 1321/2020. */
@@ -159,6 +160,7 @@ export function parseRecord(value: unknown): PatientRecord {
     entries: list(value.entries, parseEntry),
     weights: list(value.weights, parseWeight),
     vaccines: list(value.vaccines, parseVaccine),
+    documents: list(value.documents, parseDocument),
   };
 }
 export function parseEntries(value: unknown): RecordEntry[] {
@@ -171,4 +173,113 @@ export function displayWeight(grams: number): string {
 export function displayDate(value: string): string {
   const [year, month, day] = value.split('-');
   return `${day}/${month}/${year}`;
+}
+
+export const documentKinds = {
+  lab_report: 'Laudo de exame',
+  external_history: 'Histórico de outro veterinário ou clínica',
+  prescription: 'Receita',
+  other: 'Outro documento',
+} as const;
+export type DocumentKind = keyof typeof documentKinds;
+export const documentTypes = ['application/pdf', 'image/jpeg', 'image/png'];
+export const maxDocumentBytes = 10 * 1024 * 1024;
+
+export interface PatientDocument {
+  id: string;
+  patient_id: string;
+  encounter_id: string | null;
+  root_id: string;
+  version: number;
+  supersedes_id: string | null;
+  correction_reason: string | null;
+  kind: DocumentKind;
+  origin_name: string;
+  origin_crmv: string | null;
+  document_date: string;
+  summary: string | null;
+  file_name: string | null;
+  content_type: string | null;
+  size_bytes: number | null;
+  sha256: string | null;
+  author_id: string;
+  author_name: string;
+  author_crmv: string | null;
+  created_at: string;
+}
+export function parseDocument(value: unknown): PatientDocument {
+  if (
+    !object(value) ||
+    typeof value.version !== 'number' ||
+    !(value.size_bytes === null || typeof value.size_bytes === 'number') ||
+    !Object.hasOwn(documentKinds, String(value.kind))
+  )
+    invalid();
+  strings(
+    value,
+    [
+      'id',
+      'patient_id',
+      'root_id',
+      'origin_name',
+      'document_date',
+      'author_id',
+      'author_name',
+      'created_at',
+    ],
+    [
+      ...correction,
+      'encounter_id',
+      'origin_crmv',
+      'summary',
+      'file_name',
+      'content_type',
+      'sha256',
+      'author_crmv',
+    ],
+  );
+  return value as unknown as PatientDocument;
+}
+export function parseDocuments(value: unknown): PatientDocument[] {
+  return list(value, parseDocument);
+}
+export function displaySize(bytes: number): string {
+  return bytes < 1024 * 1024
+    ? `${Math.max(1, Math.round(bytes / 1024))} KB`
+    : `${(bytes / 1024 / 1024).toLocaleString('pt-BR', { maximumFractionDigits: 1 })} MB`;
+}
+
+async function failure(response: Response): Promise<never> {
+  const body: unknown = await response.json().catch(() => null);
+  if (object(body) && object(body.error) && typeof body.error.message === 'string')
+    throw new Error(body.error.message);
+  throw new Error('Não foi possível concluir a operação.');
+}
+
+/** Envio multipart: o arquivo vai junto com os campos, numa única requisição. */
+export async function uploadDocument(
+  token: string,
+  patientId: string,
+  form: FormData,
+): Promise<PatientDocument> {
+  const response = await fetch(`/api/patients/${patientId}/documents`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+    body: form,
+    signal: AbortSignal.timeout(60000),
+  });
+  if (!response.ok) return failure(response);
+  return parseDocument(await response.json());
+}
+
+export async function fetchDocumentFile(token: string, documentId: string): Promise<Blob> {
+  const response = await fetch(`/api/documents/${documentId}/file`, {
+    headers: { Authorization: `Bearer ${token}` },
+    signal: AbortSignal.timeout(60000),
+  });
+  if (!response.ok) return failure(response);
+  const type = response.headers.get('Content-Type') ?? '';
+  // Só tipos conferidos pelo backend viram conteúdo exibível no navegador.
+  if (!documentTypes.includes(type)) throw new Error('Tipo de arquivo inesperado.');
+  return new Blob([await response.arrayBuffer()], { type });
 }

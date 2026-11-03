@@ -16,6 +16,7 @@ import {
 } from './records-api';
 import type { PatientRecord, RecordEntry, VaccineRecord, WeightRecord } from './records-api';
 import { reveal } from './reveal';
+import { PatientDocuments } from './PatientDocuments';
 
 type Form =
   | { kind: 'entry'; supersedes: RecordEntry | null }
@@ -542,6 +543,14 @@ export function Records({
                   ))}
                 </ul>
               )}
+              <PatientDocuments
+                token={token}
+                user={user}
+                patientId={target.patientId}
+                documents={record.documents}
+                encounters={encounters}
+                onSaved={() => setRevision((current) => current + 1)}
+              />
             </>
           )}
         </>

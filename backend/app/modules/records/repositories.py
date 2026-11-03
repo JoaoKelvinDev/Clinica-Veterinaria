@@ -5,9 +5,15 @@ from sqlalchemy import insert, select
 from sqlalchemy.orm import Session, aliased
 
 from app.core.repositories import ClinicContext, TenantRepository
-from app.modules.records.models import AuditLog, RecordEntry, VaccineRecord, WeightRecord
+from app.modules.records.models import (
+    AuditLog,
+    PatientDocument,
+    RecordEntry,
+    VaccineRecord,
+    WeightRecord,
+)
 
-type Superseding = RecordEntry | WeightRecord | VaccineRecord
+type Superseding = RecordEntry | WeightRecord | VaccineRecord | PatientDocument
 
 
 class AppendOnlyRepository[ModelT: Superseding](TenantRepository[ModelT]):
@@ -50,6 +56,18 @@ class WeightRepository(AppendOnlyRepository[WeightRecord]):
 class VaccineRepository(AppendOnlyRepository[VaccineRecord]):
     def __init__(self, session: Session, context: ClinicContext) -> None:
         super().__init__(session, context, VaccineRecord)
+
+
+class DocumentRepository(AppendOnlyRepository[PatientDocument]):
+    def __init__(self, session: Session, context: ClinicContext) -> None:
+        super().__init__(session, context, PatientDocument)
+
+    def versions(self, root_id: UUID) -> Sequence[PatientDocument]:
+        return self.session.scalars(
+            self._select()
+            .where(PatientDocument.root_id == root_id)
+            .order_by(PatientDocument.version)
+        ).all()
 
 
 class AuditRepository(TenantRepository[AuditLog]):
