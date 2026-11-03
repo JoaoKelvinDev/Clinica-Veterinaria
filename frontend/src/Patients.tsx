@@ -2,8 +2,10 @@ import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { apiRequest } from './api';
 import { PatientTutors } from './PatientTutors';
+import type { RecordTarget } from './Records';
 import { errorMessage, parsePage, parsePatient } from './registry-api';
 import type { Page, Patient } from './registry-api';
+import { reveal } from './reveal';
 
 interface Draft {
   id: string | null;
@@ -32,7 +34,15 @@ const empty: Draft = {
   notes: '',
 };
 
-export function Patients({ token, canWrite }: { token: string; canWrite: boolean }) {
+export function Patients({
+  token,
+  canWrite,
+  onOpenRecord,
+}: {
+  token: string;
+  canWrite: boolean;
+  onOpenRecord: (target: RecordTarget) => void;
+}) {
   const [page, setPage] = useState<Page<Patient>>({ items: [], total: 0 });
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState('');
@@ -218,6 +228,12 @@ export function Patients({ token, canWrite }: { token: string; canWrite: boolean
                     <div className="actions">
                       <button
                         className="secondary"
+                        onClick={() => onOpenRecord({ patientId: item.id, patientName: item.name })}
+                      >
+                        Prontuário de {item.name}
+                      </button>
+                      <button
+                        className="secondary"
                         onClick={() => {
                           setSelected(item);
                           setDraft(null);
@@ -283,7 +299,7 @@ export function Patients({ token, canWrite }: { token: string; canWrite: boolean
         </div>
       </div>
       {archive && (
-        <div className="confirmation">
+        <div className="confirmation" key={archive.id} ref={reveal}>
           <p>
             Arquivar <strong>{archive.name}</strong>? O cadastro e os vínculos serão preservados.
           </p>
@@ -304,7 +320,9 @@ export function Patients({ token, canWrite }: { token: string; canWrite: boolean
       )}
       {draft && (
         <form
+          key={draft.id ?? 'novo'}
           className="registry-form"
+          ref={reveal}
           onSubmit={(event) => {
             void save(event);
           }}

@@ -138,7 +138,7 @@ describe('Cadastros de tutores e animais', () => {
       return json({ items: [], total: 0 });
     });
     vi.stubGlobal('fetch', fetchMock);
-    render(<Patients token="mock" canWrite />);
+    render(<Patients token="mock" canWrite onOpenRecord={() => {}} />);
     await screen.findByText('Nenhum paciente encontrado.');
     fireEvent.click(screen.getByRole('button', { name: 'Novo paciente' }));
     change('Nome do paciente', patient.name);

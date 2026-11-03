@@ -70,6 +70,7 @@ class Encounter(TenantModel):
     __table_args__ = (
         UniqueConstraint("clinic_id", "id", name="uq_encounter_clinic_id"),
         UniqueConstraint("clinic_id", "appointment_id", name="uq_encounter_appointment"),
+        UniqueConstraint("clinic_id", "id", "patient_id", name="uq_encounter_patient"),
         ForeignKeyConstraint(
             ["clinic_id", "patient_id"], ["vetsys.patients.clinic_id", "vetsys.patients.id"]
         ),

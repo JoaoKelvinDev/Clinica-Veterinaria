@@ -2,11 +2,14 @@ from datetime import UTC, date, datetime, time, timedelta
 from uuid import UUID, uuid4
 from zoneinfo import ZoneInfo
 
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, OperationalError
+from sqlalchemy.orm import Session
 
 from app.core.errors import AccessDenied, BusinessConflict, InvalidData, ResourceNotFound
 from app.core.permissions import require_registry_writer
+from app.core.repositories import ClinicContext
 from app.modules.clinics.models import Role, User
+from app.modules.clinics.repositories import ClinicRepository, UserRepository
 from app.modules.clinics.services import UserService
 from app.modules.patients.services import PatientService
 from app.modules.scheduling.models import Appointment, AppointmentStatus, Encounter
@@ -22,6 +25,7 @@ from app.modules.scheduling.schemas import (
 
 TIMEZONE = ZoneInfo("America/Fortaleza")
 EDITABLE = {"scheduled", "confirmed"}
+DEADLOCK = "40P01"
 
 
 def day_bounds(day: date) -> tuple[datetime, datetime]:
@@ -42,6 +46,15 @@ def require_veterinarian(actor: User, veterinarian_id: UUID) -> None:
 
 
 class SchedulingService:
+    @classmethod
+    def for_clinic(cls, session: Session, context: ClinicContext) -> "SchedulingService":
+        return cls(
+            AppointmentRepository(session, context),
+            EncounterRepository(session, context),
+            PatientService.for_clinic(session, context),
+            UserService(UserRepository(session, context), ClinicRepository(session, context)),
+        )
+
     def __init__(
         self,
         appointments: AppointmentRepository,
@@ -114,6 +127,9 @@ class SchedulingService:
         items, total = self.appointments.page(*day_bounds(day), veterinarian_id, limit, offset)
         return AppointmentPage(items=[self.appointment_read(item) for item in items], total=total)
 
+    def patient_encounters(self, patient_id: UUID) -> list[EncounterRead]:
+        return [self.encounter_read(item) for item in self.encounters.for_patient(patient_id)]
+
     def search_encounters(
         self, day: date, veterinarian_id: UUID | None, limit: int, offset: int
     ) -> EncounterPage:
@@ -132,7 +148,13 @@ class SchedulingService:
                 raise BusinessConflict("O veterinário já possui um agendamento nesse intervalo.")
         try:
             self.appointments.save(item)
-        except IntegrityError:
+        except (IntegrityError, OperationalError) as error:
+            # Duas reservas simultâneas do mesmo horário podem terminar em deadlock na
+            # restrição de exclusão; para quem agenda, é o mesmo conflito de horário.
+            if isinstance(error, OperationalError) and (
+                getattr(error.orig, "sqlstate", None) != DEADLOCK
+            ):
+                raise
             raise BusinessConflict(
                 "Não foi possível reservar esse horário. "
                 "Atualize a agenda e escolha outro intervalo."

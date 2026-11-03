@@ -1,0 +1,174 @@
+export interface RecordEntry {
+  id: string;
+  patient_id: string;
+  encounter_id: string;
+  root_id: string;
+  version: number;
+  supersedes_id: string | null;
+  correction_reason: string | null;
+  author_id: string;
+  author_name: string;
+  author_crmv: string;
+  created_at: string;
+  location: string;
+  complaint: string;
+  general_state: string;
+  findings: string | null;
+  presumptive_diagnosis: string;
+  conclusive_diagnosis: string | null;
+  procedures: string | null;
+  prescription: string | null;
+  follow_up: string | null;
+}
+export interface WeightRecord {
+  id: string;
+  weight_grams: number;
+  supersedes_id: string | null;
+  correction_reason: string | null;
+  author_id: string;
+  author_name: string;
+  created_at: string;
+}
+export interface VaccineRecord {
+  id: string;
+  encounter_id: string;
+  vaccine_name: string;
+  batch: string;
+  manufacturer: string;
+  dose: string;
+  manufactured_on: string;
+  expires_on: string;
+  next_dose_on: string | null;
+  supersedes_id: string | null;
+  correction_reason: string | null;
+  author_id: string;
+  author_name: string;
+  author_crmv: string;
+  created_at: string;
+}
+export interface TimelineEncounter {
+  id: string;
+  started_at: string;
+  completed_at: string | null;
+  veterinarian_name: string;
+  appointment_id: string | null;
+}
+export interface PatientRecord {
+  patient_id: string;
+  clinical_access: boolean;
+  encounters: TimelineEncounter[];
+  entries: RecordEntry[];
+  weights: WeightRecord[];
+  vaccines: VaccineRecord[];
+}
+
+/** Campos de texto do registro, na ordem do art. 9º da Resolução CFMV 1321/2020. */
+export const entryFields = [
+  ['complaint', 'Relato do responsável', true],
+  ['general_state', 'Estado geral e parâmetros', true],
+  ['findings', 'Achados do histórico e dos exames', false],
+  ['presumptive_diagnosis', 'Diagnóstico presuntivo', true],
+  ['conclusive_diagnosis', 'Diagnóstico conclusivo', false],
+  ['procedures', 'Procedimentos realizados', false],
+  ['prescription', 'Prescrição', false],
+  ['follow_up', 'Retorno sugerido', false],
+] as const;
+export type EntryField = (typeof entryFields)[number][0];
+
+function object(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === 'object';
+}
+function invalid(): never {
+  throw new Error('O sistema retornou dados inválidos do prontuário.');
+}
+function strings(value: Record<string, unknown>, keys: string[], nullable: string[] = []) {
+  if (!keys.every((key) => typeof value[key] === 'string')) invalid();
+  if (!nullable.every((key) => value[key] === null || typeof value[key] === 'string')) invalid();
+}
+function list<T>(value: unknown, parse: (item: unknown) => T): T[] {
+  if (!Array.isArray(value)) invalid();
+  return value.map(parse);
+}
+const correction = ['supersedes_id', 'correction_reason'];
+
+export function parseEntry(value: unknown): RecordEntry {
+  if (!object(value) || typeof value.version !== 'number') invalid();
+  strings(
+    value,
+    [
+      'id',
+      'patient_id',
+      'encounter_id',
+      'root_id',
+      'author_id',
+      'author_name',
+      'author_crmv',
+      'created_at',
+      'location',
+      'complaint',
+      'general_state',
+      'presumptive_diagnosis',
+    ],
+    [...correction, 'findings', 'conclusive_diagnosis', 'procedures', 'prescription', 'follow_up'],
+  );
+  return value as unknown as RecordEntry;
+}
+export function parseWeight(value: unknown): WeightRecord {
+  if (!object(value) || typeof value.weight_grams !== 'number') invalid();
+  strings(value, ['id', 'author_id', 'author_name', 'created_at'], correction);
+  return value as unknown as WeightRecord;
+}
+export function parseVaccine(value: unknown): VaccineRecord {
+  if (!object(value)) invalid();
+  strings(
+    value,
+    [
+      'id',
+      'encounter_id',
+      'vaccine_name',
+      'batch',
+      'manufacturer',
+      'dose',
+      'manufactured_on',
+      'expires_on',
+      'author_id',
+      'author_name',
+      'author_crmv',
+      'created_at',
+    ],
+    [...correction, 'next_dose_on'],
+  );
+  return value as unknown as VaccineRecord;
+}
+function parseEncounter(value: unknown): TimelineEncounter {
+  if (!object(value)) invalid();
+  strings(value, ['id', 'started_at', 'veterinarian_name'], ['completed_at', 'appointment_id']);
+  return value as unknown as TimelineEncounter;
+}
+export function parseRecord(value: unknown): PatientRecord {
+  if (
+    !object(value) ||
+    typeof value.patient_id !== 'string' ||
+    typeof value.clinical_access !== 'boolean'
+  )
+    invalid();
+  return {
+    patient_id: value.patient_id,
+    clinical_access: value.clinical_access,
+    encounters: list(value.encounters, parseEncounter),
+    entries: list(value.entries, parseEntry),
+    weights: list(value.weights, parseWeight),
+    vaccines: list(value.vaccines, parseVaccine),
+  };
+}
+export function parseEntries(value: unknown): RecordEntry[] {
+  return list(value, parseEntry);
+}
+
+export function displayWeight(grams: number): string {
+  return `${(grams / 1000).toLocaleString('pt-BR', { maximumFractionDigits: 3 })} kg`;
+}
+export function displayDate(value: string): string {
+  const [year, month, day] = value.split('-');
+  return `${day}/${month}/${year}`;
+}

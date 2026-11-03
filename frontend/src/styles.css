@@ -358,6 +358,7 @@ legend {
 }
 .registry-form,
 .edit-form {
+  scroll-margin-top: 16px;
   display: grid;
   gap: 18px;
   max-width: 640px;
@@ -502,6 +503,7 @@ tbody tr:hover {
   color: #1d5a50;
 }
 .confirmation {
+  scroll-margin-top: 16px;
   display: grid;
   gap: 4px;
   padding: 16px 20px;
@@ -535,6 +537,60 @@ tbody tr:hover {
 }
 .link-list .role-tag {
   margin-left: 6px;
+}
+
+.profile {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 8px 24px;
+  margin: 0 0 16px;
+}
+.profile div {
+  display: contents;
+}
+.profile dt {
+  color: var(--ink-soft);
+  font-size: 14px;
+}
+.profile dd {
+  margin: 0;
+  font-weight: 600;
+}
+
+/* Prontuário */
+.visit {
+  display: grid;
+  gap: 16px;
+  padding: 20px 0;
+  border-top: 1px solid var(--line);
+}
+.visit h4 {
+  margin: 0;
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+}
+.record-entry {
+  padding-left: 16px;
+  border-left: 3px solid var(--blue-wash);
+}
+.record-entry dl {
+  display: grid;
+  gap: 12px;
+  margin: 0 0 12px;
+}
+.record-entry dt {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink-soft);
+}
+.record-entry dd {
+  margin: 2px 0 0;
+  max-width: 72ch;
+  white-space: pre-wrap;
+}
+.record-line p {
+  margin: 0 0 4px;
+  max-width: 72ch;
 }
 .health-status {
   font-size: 13px;

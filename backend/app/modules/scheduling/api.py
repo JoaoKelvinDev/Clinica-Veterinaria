@@ -5,10 +5,6 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, Query
 
 from app.core.dependencies import AuthContext
-from app.modules.clinics.repositories import ClinicRepository, UserRepository
-from app.modules.clinics.services import UserService
-from app.modules.patients.services import PatientService
-from app.modules.scheduling.repositories import AppointmentRepository, EncounterRepository
 from app.modules.scheduling.schemas import (
     AppointmentCreate,
     AppointmentPage,
@@ -25,14 +21,7 @@ router = APIRouter(tags=["Agenda e atendimentos"])
 
 
 def scheduling_service(auth: AuthContext) -> SchedulingService:
-    return SchedulingService(
-        AppointmentRepository(auth.session, auth.clinic),
-        EncounterRepository(auth.session, auth.clinic),
-        PatientService.for_clinic(auth.session, auth.clinic),
-        UserService(
-            UserRepository(auth.session, auth.clinic), ClinicRepository(auth.session, auth.clinic)
-        ),
-    )
+    return SchedulingService.for_clinic(auth.session, auth.clinic)
 
 
 Service = Annotated[SchedulingService, Depends(scheduling_service)]

@@ -9,6 +9,8 @@ import { UserAdministration } from './UserAdministration';
 import { Tutors } from './Tutors';
 import { Patients } from './Patients';
 import { Scheduling } from './Scheduling';
+import { Records } from './Records';
+import type { RecordTarget } from './Records';
 
 type View = 'clinic' | 'tutors' | 'patients' | 'scheduling';
 const navItems: [View, string][] = [
@@ -24,10 +26,29 @@ export function App({ auth = defaultAuth }: { auth?: AuthGateway | null }) {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const [view, setView] = useState<View>('clinic');
+  const [clinicNotice, setClinicNotice] = useState('');
+  // A agenda é a rotina diária de todos os papéis; por isso é a tela inicial.
+  const [view, setView] = useState<View>('scheduling');
+  const [recordTarget, setRecordTarget] = useState<RecordTarget | null>(null);
   const revision = useRef(0);
   const invalidateRequests = useCallback(() => {
     revision.current++;
+  }, []);
+
+  // Atualiza nome da clínica e perfil sem desmontar a tela atual (e suas mensagens).
+  const refreshIdentity = useCallback(async (current: AuthSession) => {
+    const request = revision.current;
+    try {
+      const profile = parseIdentity(await apiRequest(current.access_token, '/me'));
+      if (request === revision.current) setIdentity(profile);
+    } catch (reason) {
+      if (request === revision.current) {
+        setIdentity(null);
+        setError(
+          reason instanceof Error ? reason.message : 'Não foi possível carregar seu acesso.',
+        );
+      }
+    }
   }, []);
 
   const applySession = useCallback(async (next: AuthSession | null) => {
@@ -100,7 +121,8 @@ export function App({ auth = defaultAuth }: { auth?: AuthGateway | null }) {
     setError('');
     try {
       await auth.signOut();
-      setView('clinic');
+      setView('scheduling');
+      setRecordTarget(null);
       await applySession(null);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'Não foi possível sair.');
@@ -115,9 +137,11 @@ export function App({ auth = defaultAuth }: { auth?: AuthGateway | null }) {
     const name = String(new FormData(event.currentTarget).get('clinicName')).trim();
     setBusy(true);
     setError('');
+    setClinicNotice('');
     try {
       await apiRequest(session.access_token, '/clinic', { name });
-      await applySession(session);
+      await refreshIdentity(session);
+      setClinicNotice('Nome da clínica salvo.');
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'Não foi possível salvar.');
     } finally {
@@ -153,6 +177,7 @@ export function App({ auth = defaultAuth }: { auth?: AuthGateway | null }) {
 
   if (!loading && identity && session) {
     const { user, clinic } = identity;
+    const shown = recordTarget ? 'record' : view;
     return (
       <div className="shell">
         <aside className="sidebar">
@@ -175,9 +200,12 @@ export function App({ auth = defaultAuth }: { auth?: AuthGateway | null }) {
                 key={key}
                 className="nav-item"
                 aria-current={view === key ? 'page' : undefined}
-                onClick={() => setView(key)}
+                onClick={() => {
+                  setView(key);
+                  setRecordTarget(null);
+                }}
               >
-                {label}
+                {key === 'clinic' && user.role !== 'admin' ? 'Meu acesso' : label}
               </button>
             ))}
           </nav>
@@ -189,20 +217,31 @@ export function App({ auth = defaultAuth }: { auth?: AuthGateway | null }) {
         </aside>
         <main className="workspace">
           {errorMessage}
-          {view === 'scheduling' && <Scheduling token={session.access_token} user={user} />}
-          {view === 'tutors' && (
+          {recordTarget && (
+            <Records
+              token={session.access_token}
+              user={user}
+              target={recordTarget}
+              onClose={() => setRecordTarget(null)}
+            />
+          )}
+          {shown === 'scheduling' && (
+            <Scheduling token={session.access_token} user={user} onOpenRecord={setRecordTarget} />
+          )}
+          {shown === 'tutors' && (
             <Tutors
               token={session.access_token}
               canWrite={user.role === 'admin' || user.role === 'reception'}
             />
           )}
-          {view === 'patients' && (
+          {shown === 'patients' && (
             <Patients
               token={session.access_token}
               canWrite={user.role === 'admin' || user.role === 'reception'}
+              onOpenRecord={setRecordTarget}
             />
           )}
-          {view === 'clinic' &&
+          {shown === 'clinic' &&
             (user.role === 'admin' ? (
               <>
                 <section className="panel">
@@ -225,20 +264,47 @@ export function App({ auth = defaultAuth }: { auth?: AuthGateway | null }) {
                     </label>
                     <button disabled={busy}>Salvar nome</button>
                   </form>
+                  {clinicNotice && (
+                    <p role="status" className="success-message">
+                      {clinicNotice}
+                    </p>
+                  )}
                 </section>
                 <UserAdministration
                   token={session.access_token}
                   onIdentityChanged={() => {
-                    void applySession(session);
+                    void refreshIdentity(session);
                   }}
                 />
               </>
             ) : (
               <section className="panel">
-                <h2>Bem-vindo à sua clínica</h2>
-                <p>
-                  Seu acesso está ativo. As funcionalidades de atendimento serão disponibilizadas
-                  nas próximas etapas.
+                <h2>Seu acesso</h2>
+                <dl className="profile">
+                  <div>
+                    <dt>Clínica</dt>
+                    <dd>{clinic.name}</dd>
+                  </div>
+                  <div>
+                    <dt>Nome</dt>
+                    <dd>{user.name}</dd>
+                  </div>
+                  <div>
+                    <dt>Papel</dt>
+                    <dd>{roleLabels[user.role]}</dd>
+                  </div>
+                  {user.crmv && (
+                    <div>
+                      <dt>CRMV</dt>
+                      <dd>
+                        {user.crmv_state} {user.crmv}
+                      </dd>
+                    </div>
+                  )}
+                </dl>
+                <p className="muted">
+                  Para corrigir esses dados ou o acesso de outra pessoa, fale com o administrador da
+                  clínica.
                 </p>
               </section>
             ))}
