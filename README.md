@@ -1,6 +1,6 @@
 # Sistema Veterinário
 
-Aplicação para clínicas veterinárias pequenas no Brasil. Etapas implementadas: fundação; clínica, usuários e autenticação; tutores e animais. Agenda, prontuário e os demais módulos serão desenvolvidos em etapas próprias.
+Aplicação para clínicas veterinárias pequenas no Brasil. Etapas implementadas: fundação; clínica, usuários e autenticação; tutores e animais; agenda e atendimentos. Prontuário e os demais módulos serão desenvolvidos em etapas próprias.
 
 ## Ambiente gratuito e local
 
@@ -65,6 +65,14 @@ Em Tutores, busque por nome ou telefone. O telefone é opcional e normalizado pa
 Em Animais, busque por nome ou microchip. Nome e espécie são obrigatórios; os demais campos são opcionais. Informe nascimento ou idade estimada em meses. O microchip é único entre pacientes ativos da mesma clínica. Ao salvar ou abrir “Tutores de…”, vincule os responsáveis: um tutor pode cuidar de vários pacientes, e cada paciente pode ter vários tutores. O primeiro vínculo é principal; é possível escolher outro. Remover o principal não escolhe automaticamente um substituto.
 
 Arquivar preserva o cadastro. Tutores arquivados permanecem nos vínculos anteriores, identificados como arquivados, com autorização revogada; não são oferecidos para novos vínculos. Esta entrega não inclui restauração de cadastros ou consulta de pacientes arquivados pela interface.
+
+## Agenda e atendimentos — Etapa 3
+
+Após entrar, abra **Agenda**. Escolha o dia e, se quiser, filtre por veterinário. Os horários seguem o fuso `America/Fortaleza`.
+
+Administradores e recepção agendam, reagendam, confirmam, cancelam ou marcam falta. O mesmo veterinário não pode ter dois agendamentos no mesmo intervalo; cancelados e faltas liberam o horário e continuam registrados. Reagendar volta a situação para “Agendado”, pois o novo horário precisa ser confirmado com o tutor.
+
+O veterinário responsável inicia e conclui o atendimento. Ele também pode abrir um atendimento avulso, sem agendamento, que começa no horário atual. Auxiliares consultam a agenda. Nesta etapa não há lembretes, mensagens ou prontuário.
 
 ## Autenticação e isolamento
 
