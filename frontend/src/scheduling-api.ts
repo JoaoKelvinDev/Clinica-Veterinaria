@@ -101,6 +101,15 @@ export function utcDateTime(value: string): string {
     result += target - Date.parse(`${localDateTime(new Date(result))}:00Z`);
   return new Date(result).toISOString();
 }
+/** Na agenda de um dia, basta a hora; a data só aparece se o horário cair em outro dia. */
+export function displayOnDay(value: string, day: string): string {
+  if (localDateTime(value).slice(0, 10) !== day) return displayDateTime(value);
+  return new Intl.DateTimeFormat('pt-BR', {
+    timeZone: clinicTimezone,
+    timeStyle: 'short',
+  }).format(new Date(value));
+}
+
 export function displayDateTime(value: string): string {
   return new Intl.DateTimeFormat('pt-BR', {
     timeZone: clinicTimezone,

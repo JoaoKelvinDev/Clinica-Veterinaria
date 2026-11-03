@@ -6,6 +6,7 @@ import { errorMessage, parsePage, parsePatient } from './registry-api';
 import type { Page, Patient } from './registry-api';
 import {
   displayDateTime,
+  displayOnDay,
   localDateTime,
   parseAppointment,
   parseEncounter,
@@ -13,6 +14,7 @@ import {
   utcDateTime,
 } from './scheduling-api';
 import type { Appointment, AppointmentStatus, Encounter } from './scheduling-api';
+import type { RecordTarget } from './Records';
 
 interface Draft {
   id: string | null;
@@ -36,7 +38,15 @@ const actionLabels = {
   complete: 'Concluir atendimento',
 };
 
-export function Scheduling({ token, user }: { token: string; user: UserProfile }) {
+export function Scheduling({
+  token,
+  user,
+  onOpenRecord,
+}: {
+  token: string;
+  user: UserProfile;
+  onOpenRecord: (target: RecordTarget) => void;
+}) {
   const canBook = user.role === 'admin' || user.role === 'reception';
   const isVet = user.role === 'veterinarian';
   const [day, setDay] = useState(() => localDateTime(new Date()).slice(0, 10));
@@ -458,7 +468,10 @@ export function Scheduling({ token, user }: { token: string; user: UserProfile }
               type="button"
               className="secondary"
               disabled={busy}
-              onClick={() => setDraft(null)}
+              onClick={() => {
+                setDraft(null);
+                setError('');
+              }}
             >
               Cancelar edição
             </button>
@@ -509,9 +522,9 @@ export function Scheduling({ token, user }: { token: string; user: UserProfile }
               {appointments.items.map((item) => (
                 <tr key={item.id}>
                   <td>
-                    {displayDateTime(item.starts_at)}
+                    {displayOnDay(item.starts_at, day)}
                     <br />
-                    <span className="muted">até {displayDateTime(item.ends_at)}</span>
+                    <span className="muted">até {displayOnDay(item.ends_at, day)}</span>
                   </td>
                   <td>
                     {item.patient_name}
@@ -618,18 +631,32 @@ export function Scheduling({ token, user }: { token: string; user: UserProfile }
                       {item.veterinarian_name} · {item.appointment_id ? 'Agendado' : 'Avulso'}
                     </span>
                   </td>
-                  <td>{displayDateTime(item.started_at)}</td>
+                  <td>{displayOnDay(item.started_at, day)}</td>
                   <td>
                     {item.completed_at
                       ? `Concluído em ${displayDateTime(item.completed_at)}`
                       : 'Em atendimento'}
                   </td>
                   <td>
-                    {isVet && item.veterinarian_id === user.id && !item.completed_at && (
-                      <button disabled={busy} onClick={() => ask(item, 'complete')}>
-                        Concluir {item.patient_name}
+                    <div className="actions">
+                      <button
+                        className="secondary"
+                        onClick={() =>
+                          onOpenRecord({
+                            patientId: item.patient_id,
+                            patientName: item.patient_name,
+                            encounterId: item.id,
+                          })
+                        }
+                      >
+                        Prontuário de {item.patient_name}
                       </button>
-                    )}
+                      {isVet && item.veterinarian_id === user.id && !item.completed_at && (
+                        <button disabled={busy} onClick={() => ask(item, 'complete')}>
+                          Concluir {item.patient_name}
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}

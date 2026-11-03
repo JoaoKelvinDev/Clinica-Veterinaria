@@ -285,7 +285,7 @@ Descrição conceitual. O esquema exato é definido e aprovado na etapa que o cr
 | `Encounter` | id, clinic_id, patient_id, appointment_id (opcional), veterinário, data |
 | `RecordEntry` | id, encounter_id, conteúdo, versão, autor, criado_em, substitui (versão anterior) |
 | `WeightRecord` | patient_id, peso, data |
-| `VaccineRecord` | patient_id, vacina, data aplicada, próxima dose, lote (opcional) |
+| `VaccineRecord` | patient_id, vacina, partida (lote), fabricante, dose, fabricação, validade, data aplicada, próxima dose (art. 6º da Resolução CFMV nº 1321/2020) |
 | `Quote`, `QuoteItem` | orçamento e itens, valores em centavos inteiros |
 | `Product`, `Lot`, `StockMovement` | catálogo, lotes com validade, movimentações imutáveis |
 | `Conversation`, `Message` | histórico de mensagens WhatsApp |
@@ -435,7 +435,7 @@ Se um comando de teste não puder ser executado no ambiente, informe isso explic
 
 ## 11. Comandos do projeto
 
-Comandos atuais após a Etapa 3. Consulte `README.md`, `docs/etapa-1-verificacao.md`, `docs/etapa-2-verificacao.md` e `docs/etapa-3-verificacao.md`. As escolhas aprovadas de autenticação, ambiente gratuito local e isolamento estão em `docs/decisions/0003-etapa-1-auth-e-isolamento.md`; os cadastros estão em `docs/decisions/0004-etapa-2-tutores-e-pacientes.md`; a agenda está em `docs/decisions/0005-etapa-3-agenda-e-atendimentos.md`.
+Comandos atuais após a Etapa 4. Consulte `README.md` e os documentos `docs/etapa-N-verificacao.md` de cada etapa. As escolhas aprovadas de autenticação, ambiente gratuito local e isolamento estão em `docs/decisions/0003-etapa-1-auth-e-isolamento.md`; os cadastros estão em `docs/decisions/0004-etapa-2-tutores-e-pacientes.md`; a agenda está em `docs/decisions/0005-etapa-3-agenda-e-atendimentos.md`; o prontuário e suas fontes normativas estão em `docs/decisions/0006-etapa-4-prontuario.md`.
 
 Pré-requisitos: Docker Desktop com containers Linux, Node.js 22.20+ da linha 22, npm e uv. O Supabase local não exige login na conta da nuvem. Nenhum projeto hospedado foi criado.
 
@@ -536,6 +536,11 @@ O frontend não possui migrações de banco. A primeira clínica e seus usuário
 - **Escopo:** `RecordEntry` com versionamento, peso, vacinas, linha do tempo, `AuditLog`. Confirmação normativa dos campos (2.2) como primeira tarefa.
 - **Fora do escopo:** IA, exportação em PDF.
 - **Aceite:** edição preserva versão anterior; leitura e escrita auditadas.
+
+### Etapa 4b: Anexos de laudos
+
+- **Objetivo:** guardar a cópia de cada laudo de exame complementar no prontuário (art. 9º, X, da Resolução CFMV nº 1321/2020, com a redação da nº 1653/2025). Aprovada como etapa em 2026-11-03; o plano detalhado ainda precisa de aprovação.
+- **Fora do escopo:** pesquisa ou leitura de anexos por IA, que fica para depois das etapas do roadmap.
 
 ### Etapa 5: Lembretes por WhatsApp (com provedor simulado)
 

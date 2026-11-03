@@ -53,6 +53,10 @@ describe('Autenticação e permissões', () => {
     render(<App auth={auth} />);
     await enter();
     expect(await screen.findByRole('heading', { name: clinic.name })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: 'Agenda e atendimentos' }),
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Clínica e equipe' }));
     expect(await screen.findByRole('heading', { name: 'Equipe da clínica' })).toBeInTheDocument();
     expect(auth.signIn).toHaveBeenCalledWith('ficticio@example.test', 'fictitious-password');
     fireEvent.click(screen.getByRole('button', { name: 'Sair' }));
@@ -75,8 +79,11 @@ describe('Autenticação e permissões', () => {
     mockApi(reception);
     render(<App auth={gateway(session)} />);
     expect(await screen.findByRole('heading', { name: clinic.name })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Meu acesso' }));
+    expect(await screen.findByRole('heading', { name: 'Seu acesso' })).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Equipe da clínica' })).not.toBeInTheDocument();
     expect(screen.queryByLabelText('Nome da clínica')).not.toBeInTheDocument();
+    expect(screen.queryByText(/próximas etapas/)).not.toBeInTheDocument();
   });
 
   it('nega o acesso quando o backend bloqueia um usuário', async () => {
@@ -102,6 +109,7 @@ describe('Autenticação e permissões', () => {
   it('permite ao administrador desativar um usuário', async () => {
     const fetchMock = mockApi();
     render(<App auth={gateway(session)} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Clínica e equipe' }));
     fireEvent.click(await screen.findByRole('button', { name: 'Editar Recepção fictícia' }));
     fireEvent.click(screen.getByLabelText('Usuário ativo'));
     fireEvent.click(screen.getByRole('button', { name: 'Salvar alterações' }));
@@ -115,6 +123,9 @@ describe('Autenticação e permissões', () => {
         }),
       ),
     );
+    // A confirmação continua visível: salvar não recarrega a tela inteira.
+    expect(await screen.findByText('Alterações de Recepção fictícia salvas.')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Equipe da clínica' })).toBeInTheDocument();
   });
 
   it('rejeita papéis desconhecidos na resposta do backend', () => {

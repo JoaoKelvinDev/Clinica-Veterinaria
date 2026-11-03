@@ -12,6 +12,7 @@ from app.core.db import Database
 from app.core.errors import DomainError
 from app.modules.clinics.api import router
 from app.modules.patients.api import router as patients_router
+from app.modules.records.api import router as records_router
 from app.modules.scheduling.api import router as scheduling_router
 from app.modules.tutors.api import router as tutors_router
 from app.providers.auth import AuthProvider, SupabaseAuthProvider
@@ -28,7 +29,7 @@ def create_app(
     auth_provider: AuthProvider | None = None,
 ) -> FastAPI:
     config = settings or Settings.from_environment()
-    application = FastAPI(title="Sistema Veterinário", version="0.4.0")
+    application = FastAPI(title="Sistema Veterinário", version="0.5.0")
     application.state.database = database or (
         Database(config.database_url) if config.database_url else None
     )
@@ -72,6 +73,7 @@ def create_app(
     application.include_router(tutors_router)
     application.include_router(patients_router)
     application.include_router(scheduling_router)
+    application.include_router(records_router)
     return application
 
 

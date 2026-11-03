@@ -66,6 +66,13 @@ class EncounterRepository(TenantRepository[Encounter]):
             .execution_options(populate_existing=True)
         )
 
+    def for_patient(self, patient_id: UUID) -> Sequence[Encounter]:
+        return self.session.scalars(
+            self._select()
+            .where(Encounter.patient_id == patient_id)
+            .order_by(Encounter.started_at.desc(), Encounter.id)
+        ).all()
+
     def for_appointment(self, appointment_id: UUID) -> Encounter | None:
         return self.session.scalar(self._select().where(Encounter.appointment_id == appointment_id))
 

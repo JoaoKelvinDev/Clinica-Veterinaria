@@ -13,6 +13,7 @@ export function UserAdministration({
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [editing, setEditing] = useState<UserProfile | null>(null);
   const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   useEffect(() => {
@@ -39,6 +40,7 @@ export function UserAdministration({
     if (!editing) return;
     setSaving(true);
     setError('');
+    setNotice('');
     try {
       const updated = parseUser(
         await apiRequest(token, `/users/${editing.id}`, {
@@ -51,6 +53,7 @@ export function UserAdministration({
       );
       setUsers((current) => current.map((user) => (user.id === updated.id ? updated : user)));
       setEditing(null);
+      setNotice(`Alterações de ${updated.name} salvas.`);
       onIdentityChanged();
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'Não foi possível salvar.');
@@ -68,12 +71,18 @@ export function UserAdministration({
           {error}
         </p>
       )}
+      {notice && (
+        <p role="status" className="success-message">
+          {notice}
+        </p>
+      )}
       <div className="table-scroll">
         <table>
           <thead>
             <tr>
               <th>Nome</th>
               <th>Função</th>
+              <th>CRMV</th>
               <th>Status</th>
               <th>Ação</th>
             </tr>
@@ -83,6 +92,7 @@ export function UserAdministration({
               <tr key={user.id}>
                 <td>{user.name}</td>
                 <td>{roleLabels[user.role]}</td>
+                <td>{user.crmv ? `CRMV-${user.crmv_state ?? ''} ${user.crmv}` : '—'}</td>
                 <td>{user.active ? 'Ativo' : 'Inativo'}</td>
                 <td>
                   <button
@@ -92,6 +102,7 @@ export function UserAdministration({
                     onClick={() => {
                       setEditing({ ...user });
                       setError('');
+                      setNotice('');
                     }}
                   >
                     Editar

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { apiRequest } from './api';
 import { PatientTutors } from './PatientTutors';
+import type { RecordTarget } from './Records';
 import { errorMessage, parsePage, parsePatient } from './registry-api';
 import type { Page, Patient } from './registry-api';
 
@@ -32,7 +33,15 @@ const empty: Draft = {
   notes: '',
 };
 
-export function Patients({ token, canWrite }: { token: string; canWrite: boolean }) {
+export function Patients({
+  token,
+  canWrite,
+  onOpenRecord,
+}: {
+  token: string;
+  canWrite: boolean;
+  onOpenRecord: (target: RecordTarget) => void;
+}) {
   const [page, setPage] = useState<Page<Patient>>({ items: [], total: 0 });
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState('');
@@ -216,6 +225,12 @@ export function Patients({ token, canWrite }: { token: string; canWrite: boolean
                   <td>{item.microchip ?? 'Não informado'}</td>
                   <td>
                     <div className="actions">
+                      <button
+                        className="secondary"
+                        onClick={() => onOpenRecord({ patientId: item.id, patientName: item.name })}
+                      >
+                        Prontuário de {item.name}
+                      </button>
                       <button
                         className="secondary"
                         onClick={() => {

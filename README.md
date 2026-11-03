@@ -1,6 +1,6 @@
 # Sistema Veterinário
 
-Aplicação para clínicas veterinárias pequenas no Brasil. Etapas implementadas: fundação; clínica, usuários e autenticação; tutores e animais; agenda e atendimentos. Prontuário e os demais módulos serão desenvolvidos em etapas próprias.
+Aplicação para clínicas veterinárias pequenas no Brasil. Etapas implementadas: fundação; clínica, usuários e autenticação; tutores e animais; agenda e atendimentos; prontuário. Anexos de laudos e os demais módulos serão desenvolvidos em etapas próprias.
 
 ## Ambiente gratuito e local
 
@@ -73,6 +73,16 @@ Após entrar, abra **Agenda**. Escolha o dia e, se quiser, filtre por veterinár
 Administradores e recepção agendam, reagendam, confirmam, cancelam ou marcam falta. O mesmo veterinário não pode ter dois agendamentos no mesmo intervalo; cancelados e faltas liberam o horário e continuam registrados. Reagendar volta a situação para “Agendado”, pois o novo horário precisa ser confirmado com o tutor.
 
 O veterinário responsável inicia e conclui o atendimento. Ele também pode abrir um atendimento avulso, sem agendamento, que começa no horário atual. Auxiliares consultam a agenda. Nesta etapa não há lembretes, mensagens ou prontuário.
+
+## Prontuário — Etapa 4
+
+Abra **Animais** e escolha “Prontuário de…”, ou use o botão no atendimento da **Agenda**. O prontuário segue o art. 9º da Resolução CFMV nº 1321/2020, com a redação da nº 1653/2025.
+
+Cada registro pertence a um atendimento e guarda data, hora, local, autor e CRMV. Relato do responsável, estado geral e diagnóstico presuntivo são obrigatórios. Nada é apagado: “Corrigir registro” cria uma nova versão com motivo, e a anterior continua em “Ver versões anteriores”. Somente o autor corrige o próprio registro.
+
+Veterinários registram prontuário e vacinas; auxiliares registram peso; administradores e auxiliares consultam. A recepção vê apenas as datas dos atendimentos. Vacinas exigem nome, partida, fabricante, dose, fabricação e validade. Leituras e registros ficam na auditoria, sem conteúdo clínico.
+
+Ainda não há anexos de laudos, exportação em PDF ou assinatura com certificado digital.
 
 ## Autenticação e isolamento
 

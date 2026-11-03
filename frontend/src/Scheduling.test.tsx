@@ -2,7 +2,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { UserProfile } from './api';
 import { Scheduling } from './Scheduling';
-import { localDateTime, utcDateTime } from './scheduling-api';
+import { displayOnDay, localDateTime, utcDateTime } from './scheduling-api';
 import type { Appointment, Encounter } from './scheduling-api';
 
 const admin: UserProfile = {
@@ -99,9 +99,14 @@ describe('Agenda e atendimentos', () => {
     expect(localDateTime('2030-01-02T02:30:00Z')).toBe('2030-01-01T23:30');
   });
 
+  it('mostra só a hora quando o horário é do dia escolhido', () => {
+    expect(displayOnDay('2030-01-01T12:00:00Z', '2030-01-01')).toBe('09:00');
+    expect(displayOnDay('2030-01-02T12:00:00Z', '2030-01-01')).toBe('02/01/2030, 09:00');
+  });
+
   it('filtra por dia e veterinário', async () => {
     const fetchMock = mockApi();
-    render(<Scheduling token="mock" user={admin} />);
+    render(<Scheduling token="mock" user={admin} onOpenRecord={() => {}} />);
     await screen.findByRole('button', { name: `Reagendar ${booking.patient_name}` });
     change('Dia da agenda', '2030-01-01');
     change('Filtrar por veterinário', vet.id);
@@ -115,7 +120,7 @@ describe('Agenda e atendimentos', () => {
 
   it('agenda com paciente pesquisado e envia horários UTC', async () => {
     const fetchMock = mockApi();
-    render(<Scheduling token="mock" user={admin} />);
+    render(<Scheduling token="mock" user={admin} onOpenRecord={() => {}} />);
     await screen.findByRole('button', { name: `Reagendar ${booking.patient_name}` });
     fireEvent.click(screen.getByRole('button', { name: 'Novo agendamento' }));
     change('Buscar paciente por nome ou microchip', 'Paciente');
@@ -151,7 +156,7 @@ describe('Agenda e atendimentos', () => {
           )
         : undefined,
     );
-    render(<Scheduling token="mock" user={admin} />);
+    render(<Scheduling token="mock" user={admin} onOpenRecord={() => {}} />);
     fireEvent.click(
       await screen.findByRole('button', { name: `Reagendar ${booking.patient_name}` }),
     );
@@ -163,7 +168,7 @@ describe('Agenda e atendimentos', () => {
 
   it('só cancela depois de confirmação explícita', async () => {
     const fetchMock = mockApi();
-    render(<Scheduling token="mock" user={admin} />);
+    render(<Scheduling token="mock" user={admin} onOpenRecord={() => {}} />);
     fireEvent.click(
       await screen.findByRole('button', { name: `Cancelar ${booking.patient_name}` }),
     );
@@ -181,7 +186,7 @@ describe('Agenda e atendimentos', () => {
 
   it('oferece início e conclusão apenas ao veterinário responsável', async () => {
     const fetchMock = mockApi();
-    render(<Scheduling token="mock" user={vet} />);
+    render(<Scheduling token="mock" user={vet} onOpenRecord={() => {}} />);
     expect(
       await screen.findByRole('button', { name: `Iniciar ${booking.patient_name}` }),
     ).toBeInTheDocument();
@@ -202,7 +207,7 @@ describe('Agenda e atendimentos', () => {
     { ...vet, id: 'outro-vet' },
   ])('restringe ações de atendimento para $id / $role', async (user) => {
     mockApi();
-    render(<Scheduling token="mock" user={user} />);
+    render(<Scheduling token="mock" user={user} onOpenRecord={() => {}} />);
     await screen.findByText('Consultas agendadas');
     await screen.findByText('Agendado', { selector: '.status-tag' });
     expect(
@@ -219,7 +224,7 @@ describe('Agenda e atendimentos', () => {
         ? json({ error: { message: 'Falha ao carregar a agenda.' } }, 503)
         : undefined,
     );
-    render(<Scheduling token="mock" user={admin} />);
+    render(<Scheduling token="mock" user={admin} onOpenRecord={() => {}} />);
     await screen.findByRole('button', { name: `Reagendar ${booking.patient_name}` });
     change('Dia da agenda', '2030-02-01');
     expect(await screen.findByRole('alert')).toHaveTextContent('Falha ao carregar a agenda.');
