@@ -29,6 +29,8 @@ export interface RecordTarget {
   encounterId?: string;
 }
 
+const today = () => new Date().toLocaleDateString('sv-SE', { timeZone: 'America/Fortaleza' });
+
 function text(data: FormData, name: string): string | null {
   const value = String(data.get(name) ?? '').trim();
   return value === '' ? null : value;
@@ -101,7 +103,12 @@ export function Records({
           await apiRequest(
             token,
             `/encounters/${String(data.get('encounter_id'))}/record-entries`,
-            { ...values, location: text(data, 'location'), ...correction },
+            {
+              ...values,
+              location: text(data, 'location'),
+              follow_up_on: text(data, 'follow_up_on'),
+              ...correction,
+            },
             'POST',
           ),
         );
@@ -293,6 +300,18 @@ export function Records({
                   />
                 </label>
               ))}
+              <label>
+                Data de retorno (opcional)
+                <input
+                  name="follow_up_on"
+                  type="date"
+                  min={form.supersedes ? undefined : today()}
+                  defaultValue={form.supersedes?.follow_up_on ?? ''}
+                />
+              </label>
+              <p className="muted">
+                Com data, o tutor recebe um lembrete de retorno por WhatsApp, se tiver autorizado.
+              </p>
               {reasonField}
               <div className="actions">
                 <button disabled={busy}>{busy ? 'Salvando…' : 'Salvar registro'}</button>
@@ -575,6 +594,7 @@ function EntryView({ item }: { item: RecordEntry }) {
       <p className="muted">
         Versão {item.version}, registrada por {item.author_name} ({item.author_crmv}) em{' '}
         {displayDateTime(item.created_at)}, {item.location}
+        {item.follow_up_on && `. Retorno previsto para ${displayDate(item.follow_up_on)}`}
         {item.correction_reason && `. Motivo da correção: ${item.correction_reason}`}
       </p>
     </div>

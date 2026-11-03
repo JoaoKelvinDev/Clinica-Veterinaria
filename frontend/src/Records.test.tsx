@@ -36,6 +36,7 @@ const entry: RecordEntry = {
   procedures: null,
   prescription: null,
   follow_up: null,
+  follow_up_on: null,
 };
 const full: PatientRecord = {
   patient_id: 'patient-a',

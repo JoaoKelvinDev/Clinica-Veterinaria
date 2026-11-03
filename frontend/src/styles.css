@@ -588,6 +588,11 @@ tbody tr:hover {
   max-width: 72ch;
   white-space: pre-wrap;
 }
+.message-body {
+  margin: 0;
+  max-width: 72ch;
+  white-space: pre-wrap;
+}
 .document-summary {
   white-space: pre-wrap;
 }

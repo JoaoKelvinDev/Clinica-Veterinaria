@@ -19,6 +19,7 @@ export interface RecordEntry {
   procedures: string | null;
   prescription: string | null;
   follow_up: string | null;
+  follow_up_on: string | null;
 }
 export interface WeightRecord {
   id: string;
@@ -110,7 +111,15 @@ export function parseEntry(value: unknown): RecordEntry {
       'general_state',
       'presumptive_diagnosis',
     ],
-    [...correction, 'findings', 'conclusive_diagnosis', 'procedures', 'prescription', 'follow_up'],
+    [
+      ...correction,
+      'findings',
+      'conclusive_diagnosis',
+      'procedures',
+      'prescription',
+      'follow_up',
+      'follow_up_on',
+    ],
   );
   return value as unknown as RecordEntry;
 }
