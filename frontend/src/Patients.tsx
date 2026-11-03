@@ -5,6 +5,7 @@ import { PatientTutors } from './PatientTutors';
 import type { RecordTarget } from './Records';
 import { errorMessage, parsePage, parsePatient } from './registry-api';
 import type { Page, Patient } from './registry-api';
+import { reveal } from './reveal';
 
 interface Draft {
   id: string | null;
@@ -298,7 +299,7 @@ export function Patients({
         </div>
       </div>
       {archive && (
-        <div className="confirmation">
+        <div className="confirmation" key={archive.id} ref={reveal}>
           <p>
             Arquivar <strong>{archive.name}</strong>? O cadastro e os vínculos serão preservados.
           </p>
@@ -319,7 +320,9 @@ export function Patients({
       )}
       {draft && (
         <form
+          key={draft.id ?? 'novo'}
           className="registry-form"
+          ref={reveal}
           onSubmit={(event) => {
             void save(event);
           }}

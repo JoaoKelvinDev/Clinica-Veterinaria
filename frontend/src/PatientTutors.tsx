@@ -3,6 +3,7 @@ import type { FormEvent } from 'react';
 import { apiRequest } from './api';
 import { errorMessage, parseLinks, parsePage, parseTutor } from './registry-api';
 import type { Patient, Tutor, TutorLink } from './registry-api';
+import { reveal } from './reveal';
 
 export function PatientTutors({
   patient,
@@ -102,7 +103,7 @@ export function PatientTutors({
     }
   }
   return (
-    <section className="registry-form" aria-labelledby="links-title">
+    <section className="registry-form" aria-labelledby="links-title" ref={reveal}>
       <div className="section-heading">
         <h3 id="links-title">Tutores de {patient.name}</h3>
         <button className="secondary" onClick={onClose}>
@@ -160,7 +161,7 @@ export function PatientTutors({
         </ul>
       )}
       {unlink && (
-        <div className="confirmation">
+        <div className="confirmation" key={unlink.id} ref={reveal}>
           <p>
             Remover o vínculo com <strong>{unlink.name}</strong>? Se era o principal, escolha outro
             responsável depois.

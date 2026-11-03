@@ -15,6 +15,7 @@ import {
 } from './scheduling-api';
 import type { Appointment, AppointmentStatus, Encounter } from './scheduling-api';
 import type { RecordTarget } from './Records';
+import { reveal } from './reveal';
 
 interface Draft {
   id: string | null;
@@ -336,7 +337,9 @@ export function Scheduling({
       )}
       {draft && (
         <form
+          key={draft.id ?? (draft.walkIn ? 'avulso' : 'novo')}
           className="registry-form"
+          ref={reveal}
           onSubmit={(event) => {
             void save(event);
           }}
@@ -479,7 +482,7 @@ export function Scheduling({
         </form>
       )}
       {action && (
-        <div className="confirmation">
+        <div className="confirmation" key={`${action.item.id}-${action.kind}`} ref={reveal}>
           <p>
             <strong>{actionLabels[action.kind]}</strong> de {action.item.patient_name}?
           </p>

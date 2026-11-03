@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { apiRequest, parseUser, roleLabels } from './api';
 import type { Role, UserProfile } from './api';
+import { reveal } from './reveal';
 
 export function UserAdministration({
   token,
@@ -115,7 +116,9 @@ export function UserAdministration({
       </div>
       {editing && (
         <form
+          key={editing.id}
           className="edit-form"
+          ref={reveal}
           onSubmit={(event) => {
             void save(event);
           }}

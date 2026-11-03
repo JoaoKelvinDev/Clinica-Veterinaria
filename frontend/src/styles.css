@@ -358,6 +358,7 @@ legend {
 }
 .registry-form,
 .edit-form {
+  scroll-margin-top: 16px;
   display: grid;
   gap: 18px;
   max-width: 640px;
@@ -502,6 +503,7 @@ tbody tr:hover {
   color: #1d5a50;
 }
 .confirmation {
+  scroll-margin-top: 16px;
   display: grid;
   gap: 4px;
   padding: 16px 20px;

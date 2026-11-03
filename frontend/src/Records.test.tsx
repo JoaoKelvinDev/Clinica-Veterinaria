@@ -108,8 +108,13 @@ describe('Prontuário', () => {
   it('corrige criando uma nova versão com motivo', async () => {
     const fetchMock = mockApi(full);
     render(<Records token="mock" user={vet} target={target} onClose={() => {}} />);
+    const scrolled = vi.fn();
+    Element.prototype.scrollIntoView = scrolled;
     fireEvent.click(await screen.findByRole('button', { name: 'Corrigir registro' }));
     expect(screen.getByRole('heading', { name: 'Corrigir versão 1' })).toBeInTheDocument();
+    // O formulário abre longe do botão: a tela rola até ele e foca o primeiro campo.
+    expect(scrolled).toHaveBeenCalled();
+    expect(screen.getByLabelText('Local do atendimento')).toHaveFocus();
     fireEvent.change(screen.getByLabelText('Diagnóstico presuntivo'), {
       target: { value: 'Suspeita corrigida' },
     });

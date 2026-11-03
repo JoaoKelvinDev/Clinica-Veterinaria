@@ -3,6 +3,7 @@ import type { FormEvent } from 'react';
 import { apiRequest } from './api';
 import { errorMessage, parsePage, parseTutor } from './registry-api';
 import type { Page, Tutor } from './registry-api';
+import { reveal } from './reveal';
 
 interface Draft {
   id: string | null;
@@ -265,7 +266,7 @@ export function Tutors({ token, canWrite }: { token: string; canWrite: boolean }
         </div>
       </div>
       {archive && (
-        <div className="confirmation">
+        <div className="confirmation" key={archive.id} ref={reveal}>
           <p>
             Arquivar <strong>{archive.name}</strong>? O cadastro e os vínculos serão preservados, e
             a autorização de WhatsApp será revogada.
@@ -287,7 +288,9 @@ export function Tutors({ token, canWrite }: { token: string; canWrite: boolean }
       )}
       {draft && (
         <form
+          key={draft.id ?? 'novo'}
           className="registry-form"
+          ref={reveal}
           onSubmit={(event) => {
             void save(event);
           }}

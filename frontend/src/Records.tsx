@@ -15,6 +15,7 @@ import {
   parseWeight,
 } from './records-api';
 import type { PatientRecord, RecordEntry, VaccineRecord, WeightRecord } from './records-api';
+import { reveal } from './reveal';
 
 type Form =
   | { kind: 'entry'; supersedes: RecordEntry | null }
@@ -254,7 +255,9 @@ export function Records({
 
           {form?.kind === 'entry' && (
             <form
+              key={form.supersedes?.id ?? 'novo'}
               className="registry-form"
+              ref={reveal}
               onSubmit={(event) => {
                 void submit(event);
               }}
@@ -301,7 +304,9 @@ export function Records({
 
           {form?.kind === 'weight' && (
             <form
+              key={form.supersedes?.id ?? 'novo'}
               className="registry-form"
+              ref={reveal}
               onSubmit={(event) => {
                 void submit(event);
               }}
@@ -329,7 +334,9 @@ export function Records({
 
           {form?.kind === 'vaccine' && (
             <form
+              key={form.supersedes?.id ?? 'novo'}
               className="registry-form"
+              ref={reveal}
               onSubmit={(event) => {
                 void submit(event);
               }}
@@ -415,7 +422,12 @@ export function Records({
           )}
 
           {history && (
-            <section className="registry-form" aria-labelledby="history-title">
+            <section
+              className="registry-form"
+              aria-labelledby="history-title"
+              key={history[0]?.root_id}
+              ref={reveal}
+            >
               <div className="section-heading">
                 <h3 id="history-title">Histórico de versões</h3>
                 <button className="secondary" onClick={() => setHistory(null)}>
