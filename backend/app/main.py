@@ -16,6 +16,7 @@ from app.modules.records.api import router as records_router
 from app.modules.scheduling.api import router as scheduling_router
 from app.modules.tutors.api import router as tutors_router
 from app.providers.auth import AuthProvider, SupabaseAuthProvider
+from app.providers.storage import FileStorage, SupabaseFileStorage
 
 
 class HealthResponse(BaseModel):
@@ -27,14 +28,18 @@ def create_app(
     *,
     database: Database | None = None,
     auth_provider: AuthProvider | None = None,
+    file_storage: FileStorage | None = None,
 ) -> FastAPI:
     config = settings or Settings.from_environment()
-    application = FastAPI(title="Sistema Veterinário", version="0.5.0")
+    application = FastAPI(title="Sistema Veterinário", version="0.6.0")
     application.state.database = database or (
         Database(config.database_url) if config.database_url else None
     )
     application.state.auth_provider = auth_provider or SupabaseAuthProvider(
         config.supabase_url, config.supabase_key
+    )
+    application.state.file_storage = file_storage or SupabaseFileStorage(
+        config.supabase_url, config.supabase_secret_key
     )
 
     @application.exception_handler(DomainError)

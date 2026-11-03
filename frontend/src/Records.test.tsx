@@ -62,6 +62,7 @@ const full: PatientRecord = {
     },
   ],
   vaccines: [],
+  documents: [],
 };
 const tutorLink = {
   id: 'link-a',

@@ -33,7 +33,7 @@ if (
   );
 }
 console.log(
-  "Iniciando PostgreSQL e Supabase Auth locais; o primeiro download pode demorar.",
+  "Iniciando PostgreSQL, Supabase Auth e Storage locais; o primeiro download pode demorar.",
 );
 try {
   execFileSync(
@@ -44,7 +44,7 @@ try {
       "--network-id",
       "vetsys-local",
       "--exclude",
-      "realtime,storage-api,imgproxy,mailpit,postgres-meta,studio,edge-runtime,logflare,vector,supavisor",
+      "realtime,imgproxy,mailpit,postgres-meta,studio,edge-runtime,logflare,vector,supavisor",
     ],
     { stdio: ["ignore", "pipe", "pipe"] },
   );

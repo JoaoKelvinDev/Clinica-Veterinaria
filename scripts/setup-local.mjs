@@ -67,4 +67,28 @@ execFileSync(
     env: { ...process.env, UV_CACHE_DIR: resolve(".cache/uv") },
   },
 );
+// Bucket privado dos anexos do prontuário. Idempotente: "já existe" não é erro.
+const bucket = await fetch(`${status.API_URL}/storage/v1/bucket`, {
+  method: "POST",
+  headers: {
+    apikey: secretKey,
+    Authorization: `Bearer ${secretKey}`,
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    id: "vetsys-documents",
+    name: "vetsys-documents",
+    public: false,
+    file_size_limit: 10 * 1024 * 1024,
+    allowed_mime_types: ["application/pdf", "image/jpeg", "image/png"],
+  }),
+});
+if (!bucket.ok && ![400, 409].includes(bucket.status)) {
+  throw new Error(
+    `Não foi possível criar o bucket de documentos (HTTP ${bucket.status}).`,
+  );
+}
+if (!bucket.ok && !/exist/i.test(await bucket.text())) {
+  throw new Error("Não foi possível criar o bucket de documentos.");
+}
 console.log("Ambiente local configurado. Nenhum recurso hospedado foi criado.");
