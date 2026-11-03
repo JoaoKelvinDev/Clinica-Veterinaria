@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from datetime import UTC, datetime
 from uuid import UUID
 
@@ -38,6 +39,9 @@ class TutorService:
         if tutor is None:
             raise ResourceNotFound("Tutor não encontrado.")
         return tutor
+
+    def by_phone(self, phone: str) -> Sequence[Tutor]:
+        return self.repository.by_phone(phone)
 
     def list(self, search: str, limit: int, offset: int) -> TutorPage:
         items, total = self.repository.list(search.strip(), limit, offset)

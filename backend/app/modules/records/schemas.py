@@ -32,6 +32,7 @@ class RecordEntryCreate(Correction):
     procedures: Text | None = None
     prescription: Text | None = None
     follow_up: str | None = Field(default=None, min_length=1, max_length=500)
+    follow_up_on: date | None = None
 
 
 class RecordEntryRead(BaseModel):
@@ -55,6 +56,7 @@ class RecordEntryRead(BaseModel):
     procedures: str | None
     prescription: str | None
     follow_up: str | None
+    follow_up_on: date | None
 
 
 class WeightCreate(Correction):

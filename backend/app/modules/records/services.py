@@ -10,6 +10,7 @@ from app.core.repositories import ClinicContext
 from app.modules.clinics.models import Role, User
 from app.modules.clinics.repositories import ClinicRepository
 from app.modules.clinics.services import ClinicService
+from app.modules.messaging.planner import ReminderPlanner
 from app.modules.records.models import RecordEntry, VaccineRecord, WeightRecord
 from app.modules.records.repositories import (
     AppendOnlyRepository,
@@ -72,6 +73,7 @@ class RecordService:
             SchedulingService.for_clinic(session, context),
             ClinicService(ClinicRepository(session, context)),
             DocumentRepository(session, context),
+            ReminderPlanner.for_clinic(session, context),
         )
 
     def __init__(
@@ -83,6 +85,7 @@ class RecordService:
         scheduling: SchedulingService,
         clinics: ClinicService,
         documents: DocumentRepository,
+        reminders: ReminderPlanner | None = None,
     ) -> None:
         self.entries = entries
         self.weights = weights
@@ -91,6 +94,7 @@ class RecordService:
         self.scheduling = scheduling
         self.clinics = clinics
         self.documents = documents
+        self.reminders = reminders
 
     def record(self, actor: User, patient_id: UUID) -> PatientRecord:
         self.scheduling.patients.get(patient_id, include_archived=True)
@@ -179,6 +183,12 @@ class RecordService:
     ) -> RecordEntryRead:
         crmv = require_clinician(actor)
         encounter = self.scheduling.get_encounter(encounter_id)
+        if (
+            values.supersedes_id is None
+            and values.follow_up_on is not None
+            and values.follow_up_on < datetime.now(TIMEZONE).date()
+        ):
+            raise InvalidData("A data de retorno não pode estar no passado.")
         content = values.model_dump(exclude={"supersedes_id", "correction_reason", "location"})
         entry_id = uuid4()
         if values.supersedes_id is None:
@@ -206,6 +216,10 @@ class RecordService:
             **content,
         )
         self._save(self.entries, entry)
+        if self.reminders:
+            self.reminders.follow_up_recorded(
+                entry.id, entry.patient_id, entry.follow_up_on, values.supersedes_id
+            )
         action = "create" if version == 1 else "correct"
         self.audit.add(actor.id, action, "record_entry", entry.id, entry.patient_id)
         return RecordEntryRead.model_validate(entry, from_attributes=True)
@@ -253,6 +267,10 @@ class RecordService:
             **values.model_dump(),
         )
         self._save(self.vaccines, vaccine)
+        if self.reminders:
+            self.reminders.vaccine_recorded(
+                vaccine.id, patient_id, vaccine.next_dose_on, values.supersedes_id
+            )
         action = "create" if values.supersedes_id is None else "correct"
         self.audit.add(actor.id, action, "vaccine", vaccine.id, patient_id)
         return VaccineRead.model_validate(vaccine, from_attributes=True)

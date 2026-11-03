@@ -11,11 +11,13 @@ from app.core.config import Settings
 from app.core.db import Database
 from app.core.errors import DomainError
 from app.modules.clinics.api import router
+from app.modules.messaging.api import router as messaging_router
 from app.modules.patients.api import router as patients_router
 from app.modules.records.api import router as records_router
 from app.modules.scheduling.api import router as scheduling_router
 from app.modules.tutors.api import router as tutors_router
 from app.providers.auth import AuthProvider, SupabaseAuthProvider
+from app.providers.messaging import MessagingProvider, MockMessagingProvider
 from app.providers.storage import FileStorage, SupabaseFileStorage
 
 
@@ -29,9 +31,10 @@ def create_app(
     database: Database | None = None,
     auth_provider: AuthProvider | None = None,
     file_storage: FileStorage | None = None,
+    messaging_provider: MessagingProvider | None = None,
 ) -> FastAPI:
     config = settings or Settings.from_environment()
-    application = FastAPI(title="Sistema Veterinário", version="0.6.0")
+    application = FastAPI(title="Sistema Veterinário", version="0.7.0")
     application.state.database = database or (
         Database(config.database_url) if config.database_url else None
     )
@@ -41,6 +44,8 @@ def create_app(
     application.state.file_storage = file_storage or SupabaseFileStorage(
         config.supabase_url, config.supabase_secret_key
     )
+    # Etapa 5: somente envio simulado (MOCK), sem custo e sem WhatsApp real.
+    application.state.messaging_provider = messaging_provider or MockMessagingProvider()
 
     @application.exception_handler(DomainError)
     async def domain_error(_request: Request, error: DomainError) -> JSONResponse:
@@ -79,6 +84,7 @@ def create_app(
     application.include_router(patients_router)
     application.include_router(scheduling_router)
     application.include_router(records_router)
+    application.include_router(messaging_router)
     return application
 
 

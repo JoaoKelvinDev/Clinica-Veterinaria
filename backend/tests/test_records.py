@@ -162,8 +162,8 @@ def test_correction_must_come_from_author_and_same_encounter(
         crmv="9999",
         crmv_state="PI",
     )
-    values = RecordEntryCreate(
-        **ENTRY, supersedes_id=UUID(str(first["id"])), correction_reason="Tentativa"
+    values = RecordEntryCreate.model_validate(
+        {**ENTRY, "supersedes_id": first["id"], "correction_reason": "Tentativa"}
     )
     with database.runtime.sessions.begin() as session, pytest.raises(AccessDenied):
         set_context(session, "vetsys.clinic_id", str(data.clinic_a.id))

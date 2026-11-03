@@ -81,6 +81,7 @@ class RecordEntry(TenantModel):
     procedures: Mapped[str | None] = mapped_column(Text, default=None)
     prescription: Mapped[str | None] = mapped_column(Text, default=None)
     follow_up: Mapped[str | None] = mapped_column(String(500), default=None)
+    follow_up_on: Mapped[date | None] = mapped_column(Date, default=None)
 
 
 class WeightRecord(TenantModel):

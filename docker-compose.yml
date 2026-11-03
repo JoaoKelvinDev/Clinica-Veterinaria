@@ -18,6 +18,17 @@ services:
       retries: 3
       start_period: 10s
 
+  # Envia os lembretes vencidos a cada minuto. Provedor simulado (MOCK): nada sai do computador.
+  worker:
+    build: ./backend
+    command: ["python", "-m", "app.worker"]
+    environment:
+      DATABASE_URL: ${DOCKER_DATABASE_URL:-}
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+
   frontend:
     build:
       context: ./frontend

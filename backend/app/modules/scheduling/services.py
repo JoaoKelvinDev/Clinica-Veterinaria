@@ -11,6 +11,7 @@ from app.core.repositories import ClinicContext
 from app.modules.clinics.models import Role, User
 from app.modules.clinics.repositories import ClinicRepository, UserRepository
 from app.modules.clinics.services import UserService
+from app.modules.messaging.planner import ReminderPlanner
 from app.modules.patients.services import PatientService
 from app.modules.scheduling.models import Appointment, AppointmentStatus, Encounter
 from app.modules.scheduling.repositories import AppointmentRepository, EncounterRepository
@@ -53,6 +54,7 @@ class SchedulingService:
             EncounterRepository(session, context),
             PatientService.for_clinic(session, context),
             UserService(UserRepository(session, context), ClinicRepository(session, context)),
+            ReminderPlanner.for_clinic(session, context),
         )
 
     def __init__(
@@ -61,11 +63,13 @@ class SchedulingService:
         encounters: EncounterRepository,
         patients: PatientService,
         users: UserService,
+        reminders: ReminderPlanner | None = None,
     ) -> None:
         self.appointments = appointments
         self.encounters = encounters
         self.patients = patients
         self.users = users
+        self.reminders = reminders
 
     def get(self, appointment_id: UUID, *, lock: bool = False) -> Appointment:
         item = (
@@ -169,6 +173,8 @@ class SchedulingService:
             **values.model_dump(),
         )
         self._save_appointment(item)
+        if self.reminders:
+            self.reminders.appointment_booked(item.id, item.patient_id, item.starts_at)
         return item
 
     def update(self, actor: User, appointment_id: UUID, changes: AppointmentUpdate) -> Appointment:
@@ -181,6 +187,8 @@ class SchedulingService:
         # Reagendamento precisa de uma nova confirmação do horário.
         item.status = "scheduled"
         self._save_appointment(item)
+        if self.reminders:
+            self.reminders.appointment_booked(item.id, item.patient_id, item.starts_at)
         return item
 
     def change_status(
@@ -199,6 +207,11 @@ class SchedulingService:
             )
         item.status = status.value
         self.appointments.save(item)
+        if self.reminders:
+            if status == AppointmentStatus.CONFIRMED:
+                self.reminders.appointment_confirmed(item.id, item.patient_id, item.starts_at)
+            else:
+                self.reminders.appointment_closed(item.id, "Consulta cancelada ou falta.")
         return item
 
     def start(self, actor: User, appointment_id: UUID) -> Encounter:
@@ -214,6 +227,8 @@ class SchedulingService:
         self.users.veterinarian(item.veterinarian_id)
         item.status = "in_progress"
         self.appointments.save(item)
+        if self.reminders:
+            self.reminders.appointment_closed(item.id, "Atendimento iniciado.")
         encounter = Encounter(
             clinic_id=item.clinic_id,
             patient_id=item.patient_id,

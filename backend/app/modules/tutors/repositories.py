@@ -16,6 +16,9 @@ class TutorRepository(TenantRepository[Tutor]):
     def locked(self, tutor_id: UUID) -> Tutor | None:
         return self.session.scalar(self._select().where(Tutor.id == tutor_id).with_for_update())
 
+    def by_phone(self, phone: str) -> Sequence[Tutor]:
+        return self.session.scalars(self._select().where(Tutor.phone == phone)).all()
+
     def list(self, search: str, limit: int, offset: int) -> tuple[Sequence[Tutor], int]:
         query = self._select()
         if search:
