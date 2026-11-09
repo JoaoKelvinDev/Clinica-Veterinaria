@@ -1,6 +1,6 @@
 # Sistema Veterinário
 
-Aplicação para clínicas veterinárias pequenas no Brasil. Etapas implementadas: fundação; clínica, usuários e autenticação; tutores e animais; agenda e atendimentos; prontuário; documentos e laudos; lembretes e mensagens com provedor simulado; scribe com provedores simulados. Os demais módulos serão desenvolvidos em etapas próprias.
+Aplicação para clínicas veterinárias pequenas no Brasil. Etapas implementadas: fundação; clínica, usuários e autenticação; tutores e animais; agenda e atendimentos; prontuário; documentos e laudos; lembretes e mensagens com provedor simulado; scribe com provedores simulados; orçamentos. Os demais módulos serão desenvolvidos em etapas próprias.
 
 ## Ambiente gratuito e local
 
@@ -114,6 +114,20 @@ Gerar ou descartar nunca cria registro oficial. O rascunho original e sua transc
 
 Administradores e auxiliares consultam os rascunhos; a recepção não os acessa. Modelo, provedor e versão do prompt ficam registrados. Não há envio dos dados a um provedor externo. Decisões em `docs/decisions/0009-etapa-6-scribe-simulado.md`; resultados, comandos e limitações em `docs/etapa-6-verificacao.md`.
 
+## Orçamentos — Etapa 7
+
+Abra **Orçamentos** para criar e acompanhar estimativas. Administradores, veterinários e recepção escrevem; auxiliares consultam. Escolha um paciente, um tutor ativo vinculado a ele e, se desejar, um atendimento do mesmo paciente.
+
+Informe serviços ou produtos manualmente, sem catálogo ou movimentação de estoque. Quantidades aceitam até três casas decimais; preços e desconto, até duas, com vírgula ou ponto e sem separador de milhar. Cada item é arredondado para centavos, com meio centavo para cima; depois os itens são somados e o desconto fixo é subtraído. O desconto pode zerar o total, mas não superar o subtotal. O backend calcula os valores finais e o banco confere os totais dos itens.
+
+**Salvar rascunho** permite continuar editando. Depois de mostrar o orçamento ao tutor, use **Marcar como apresentado**: a situação passa a **Enviado**, sem disparar mensagens. Nessa etapa ficam preservados nomes, vínculos, itens, validade e valores. Para corrigir, use **Criar revisão**, que cria outro rascunho vinculado ao original; o orçamento anterior permanece preservado. Criar uma revisão não revoga uma aprovação anterior automaticamente.
+
+Use **Registrar aprovação** ou **Registrar recusa** para registrar a decisão comunicada pelo tutor. Informe origem presencial, telefone ou outra; a última opção exige observação. O sistema registra usuário e horário. Não há acesso do tutor ao sistema, cobrança ou pagamento.
+
+A validade é opcional e vale até o fim do dia informado em `America/Fortaleza`. Orçamentos enviados vencidos aparecem como **Expirado** e não recebem aprovação ou recusa; podem originar uma revisão. Orçamentos já aprovados ou recusados preservam sua situação. Atualizações concorrentes ou baseadas em uma versão antiga recebem conflito: reabra o orçamento para carregar a versão atual.
+
+Limites desta entrega: 100 itens por orçamento; quantidade máxima de 999.999,999; subtotal e valores em centavos limitados a 1.000.000.000.000. Não há envio por WhatsApp, PDF, assinatura digital, catálogo, baixa de estoque ou emissão fiscal. Decisões em `docs/decisions/0010-etapa-7-orcamentos.md`; resultados e comandos em `docs/etapa-7-verificacao.md`.
+
 ## Autenticação e isolamento
 
 O frontend autentica pelo cliente oficial Supabase e envia o token à API. A API verifica a identidade com o servidor Auth e consulta o perfil ativo, sua clínica e papel no banco em cada requisição. Não aceita clínica ou papel informados pelo cliente para autorizar acesso.
@@ -197,6 +211,6 @@ Não execute downgrade no banco com dados que precisam ser preservados: o downgr
 
 Ambiente exclusivo de desenvolvimento local, sem HTTPS e sem deploy. Recuperação de senha, convites, edição de e-mail/senha pela interface e múltiplas clínicas por usuário ficam fora desta entrega. A migração para projeto hospedado depende de decisão futura e confirmação de custo zero ou nova autorização.
 
-Os resultados executados e as limitações de cada etapa estão em `docs/etapa-N-verificacao.md`, incluindo `docs/etapa-6-verificacao.md`. As decisões aprovadas estão em `docs/decisions/`. O aviso de depreciação HTTPX/TestClient continua documentado; os testes passam sem ocultá-lo.
+Os resultados executados e as limitações de cada etapa estão em `docs/etapa-N-verificacao.md`, incluindo `docs/etapa-7-verificacao.md`. As decisões aprovadas estão em `docs/decisions/`. O aviso de depreciação HTTPX/TestClient continua documentado; os testes passam sem ocultá-lo.
 
 Os commits e o envio ao repositório `JoaoKelvinDev/Clinica-Veterinaria` ficam com o responsável. A relação de arquivos e as instruções para separar as duas entregas estão em `docs/arquivos-por-etapa.md`. A parte financeira empresarial será planejada depois da etapa em andamento, conforme orientação do responsável; não foi implementada nesta entrega.
