@@ -435,7 +435,7 @@ Se um comando de teste não puder ser executado no ambiente, informe isso explic
 
 ## 11. Comandos do projeto
 
-Comandos atuais após a Etapa 5. Consulte `README.md` e os documentos `docs/etapa-N-verificacao.md` de cada etapa. As escolhas aprovadas de autenticação, ambiente gratuito local e isolamento estão em `docs/decisions/0003-etapa-1-auth-e-isolamento.md`; os cadastros estão em `docs/decisions/0004-etapa-2-tutores-e-pacientes.md`; a agenda está em `docs/decisions/0005-etapa-3-agenda-e-atendimentos.md`; o prontuário e suas fontes normativas estão em `docs/decisions/0006-etapa-4-prontuario.md`; documentos e laudos, em `docs/decisions/0007-etapa-4b-documentos.md`; lembretes e mensagens simuladas, em `docs/decisions/0008-etapa-5-lembretes-e-mensagens.md`.
+Comandos atuais após a Etapa 6. Consulte `README.md` e os documentos `docs/etapa-N-verificacao.md` de cada etapa. As escolhas aprovadas de autenticação, ambiente gratuito local e isolamento estão em `docs/decisions/0003-etapa-1-auth-e-isolamento.md`; os cadastros estão em `docs/decisions/0004-etapa-2-tutores-e-pacientes.md`; a agenda está em `docs/decisions/0005-etapa-3-agenda-e-atendimentos.md`; o prontuário e suas fontes normativas estão em `docs/decisions/0006-etapa-4-prontuario.md`; documentos e laudos, em `docs/decisions/0007-etapa-4b-documentos.md`; lembretes e mensagens simuladas, em `docs/decisions/0008-etapa-5-lembretes-e-mensagens.md`; scribe simulado, em `docs/decisions/0009-etapa-6-scribe-simulado.md`.
 
 Pré-requisitos: Docker Desktop com containers Linux, Node.js 22.20+ da linha 22, npm e uv. O Supabase local não exige login na conta da nuvem. Nenhum projeto hospedado foi criado.
 
@@ -555,6 +555,8 @@ Implementação verificada em 2026-11-09, incluindo correções aprovadas de jan
 - **Aceite:** com o mock, lembretes são gerados no momento certo, respeitam opt-in e são idempotentes.
 
 ### Etapa 6: Scribe de IA (com provedores simulados)
+
+Plano aprovado e implementação verificada em 2026-11-09. Entrada por texto ou exemplo fictício, sem captura/upload de áudio real. Evidências e limitações em `docs/etapa-6-verificacao.md`; decisões em `docs/decisions/0009-etapa-6-scribe-simulado.md`.
 
 - **Objetivo:** rascunho de prontuário a partir da consulta.
 - **Escopo:** `AiDraft`, interfaces `SpeechToTextProvider` e `LLMProvider` com mocks, saída estruturada validada, fluxo de revisão e aprovação.

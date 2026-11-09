@@ -1,6 +1,6 @@
 # Sistema Veterinário
 
-Aplicação para clínicas veterinárias pequenas no Brasil. Etapas implementadas: fundação; clínica, usuários e autenticação; tutores e animais; agenda e atendimentos; prontuário; documentos e laudos; lembretes e mensagens com provedor simulado. Os demais módulos serão desenvolvidos em etapas próprias.
+Aplicação para clínicas veterinárias pequenas no Brasil. Etapas implementadas: fundação; clínica, usuários e autenticação; tutores e animais; agenda e atendimentos; prontuário; documentos e laudos; lembretes e mensagens com provedor simulado; scribe com provedores simulados. Os demais módulos serão desenvolvidos em etapas próprias.
 
 ## Ambiente gratuito e local
 
@@ -102,6 +102,18 @@ Administradores e recepção podem disparar lembretes vencidos, simular resposta
 
 As mensagens automáticas evitam detalhes clínicos. Não há envio livre pela equipe, campanhas, agente conversacional, webhook público ou configuração das regras pela interface. Decisões em `docs/decisions/0008-etapa-5-lembretes-e-mensagens.md`; resultados e limitações em `docs/etapa-5-verificacao.md`.
 
+## Rascunhos assistidos — Etapa 6
+
+No prontuário de um paciente, abra **Rascunhos assistidos (MOCK)**. Um veterinário com CRMV cadastrado pode escolher **Novo rascunho MOCK**, selecionar um atendimento e colar uma transcrição de até 20 mil caracteres, ou usar o exemplo fictício de transcrição.
+
+Não há IA ou transcrição de áudio reais nesta entrega. O `MockSpeechToTextProvider` devolve um exemplo fixo, sem gravação ou upload de áudio. O `MockLLMProvider` copia linhas com os rótulos indicados na tela para os campos correspondentes; texto sem rótulo fica no relato do responsável. Ele não interpreta semanticamente a consulta nem propõe diagnóstico ou conduta. Campos ausentes ficam vazios e exigem revisão.
+
+Na revisão, a transcrição e o conteúdo gerado original ficam disponíveis ao lado dos campos SOAP editáveis. Complete relato, estado geral e diagnóstico presuntivo, confira os demais campos, marque **Revisei a transcrição e todos os campos e assumo a autoria do registro** e use **Aprovar e registrar no prontuário**. A aprovação cria um registro novo, com autoria e CRMV do veterinário aprovador, auditoria e planejamento de retorno quando houver data. O solicitante e o aprovador podem ser veterinários diferentes da mesma clínica.
+
+Gerar ou descartar nunca cria registro oficial. O rascunho original e sua transcrição são preservados, inclusive após o descarte. As edições da revisão são gravadas somente na aprovação: fechar ou recarregar a tela perde edições ainda não aprovadas. Um rascunho finalizado não pode ser reaberto; correções do registro oficial seguem o versionamento já existente.
+
+Administradores e auxiliares consultam os rascunhos; a recepção não os acessa. Modelo, provedor e versão do prompt ficam registrados. Não há envio dos dados a um provedor externo. Decisões em `docs/decisions/0009-etapa-6-scribe-simulado.md`; resultados, comandos e limitações em `docs/etapa-6-verificacao.md`.
+
 ## Autenticação e isolamento
 
 O frontend autentica pelo cliente oficial Supabase e envia o token à API. A API verifica a identidade com o servidor Auth e consulta o perfil ativo, sua clínica e papel no banco em cada requisição. Não aceita clínica ou papel informados pelo cliente para autorizar acesso.
@@ -185,6 +197,6 @@ Não execute downgrade no banco com dados que precisam ser preservados: o downgr
 
 Ambiente exclusivo de desenvolvimento local, sem HTTPS e sem deploy. Recuperação de senha, convites, edição de e-mail/senha pela interface e múltiplas clínicas por usuário ficam fora desta entrega. A migração para projeto hospedado depende de decisão futura e confirmação de custo zero ou nova autorização.
 
-Os resultados executados e as limitações de cada etapa estão em `docs/etapa-N-verificacao.md`, incluindo `docs/etapa-5-verificacao.md`. As decisões aprovadas estão em `docs/decisions/`. O aviso de depreciação HTTPX/TestClient continua documentado; os testes passam sem ocultá-lo.
+Os resultados executados e as limitações de cada etapa estão em `docs/etapa-N-verificacao.md`, incluindo `docs/etapa-6-verificacao.md`. As decisões aprovadas estão em `docs/decisions/`. O aviso de depreciação HTTPX/TestClient continua documentado; os testes passam sem ocultá-lo.
 
 Os commits e o envio ao repositório `JoaoKelvinDev/Clinica-Veterinaria` ficam com o responsável. A relação de arquivos e as instruções para separar as duas entregas estão em `docs/arquivos-por-etapa.md`. A parte financeira empresarial será planejada depois da etapa em andamento, conforme orientação do responsável; não foi implementada nesta entrega.
