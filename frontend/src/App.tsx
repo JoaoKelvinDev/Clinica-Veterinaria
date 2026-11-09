@@ -10,15 +10,17 @@ import { Tutors } from './Tutors';
 import { Patients } from './Patients';
 import { Scheduling } from './Scheduling';
 import { Messaging } from './Messaging';
+import { Quotes } from './Quotes';
 import { Records } from './Records';
 import type { RecordTarget } from './Records';
 
-type View = 'clinic' | 'tutors' | 'patients' | 'scheduling' | 'messaging';
+type View = 'clinic' | 'tutors' | 'patients' | 'scheduling' | 'messaging' | 'quotes';
 const navItems: [View, string][] = [
   ['scheduling', 'Agenda'],
   ['tutors', 'Tutores'],
   ['patients', 'Animais'],
   ['messaging', 'Mensagens'],
+  ['quotes', 'Orçamentos'],
   ['clinic', 'Clínica e equipe'],
 ];
 
@@ -231,6 +233,7 @@ export function App({ auth = defaultAuth }: { auth?: AuthGateway | null }) {
             <Scheduling token={session.access_token} user={user} onOpenRecord={setRecordTarget} />
           )}
           {shown === 'messaging' && <Messaging token={session.access_token} user={user} />}
+          {shown === 'quotes' && <Quotes token={session.access_token} user={user} />}
           {shown === 'tutors' && (
             <Tutors
               token={session.access_token}
