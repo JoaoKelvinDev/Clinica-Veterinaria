@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Literal
 from uuid import UUID, uuid4
 from zoneinfo import ZoneInfo
 
@@ -95,6 +96,30 @@ class RecordService:
         self.clinics = clinics
         self.documents = documents
         self.reminders = reminders
+
+    def audit_scribe(
+        self,
+        actor: User,
+        event: Literal["generate", "list", "read", "approve", "discard"],
+        entity_id: UUID,
+        patient_id: UUID,
+    ) -> None:
+        require_clinical_reader(actor)
+        self.scheduling.patients.get(patient_id, include_archived=True)
+        entity = {
+            "generate": "ai_draft",
+            "list": "ai_draft_list",
+            "read": "ai_draft",
+            "approve": "ai_draft_approval",
+            "discard": "ai_draft_discard",
+        }[event]
+        self.audit.add(
+            actor.id,
+            "read" if event in {"read", "list"} else "create",
+            entity,
+            entity_id,
+            patient_id,
+        )
 
     def record(self, actor: User, patient_id: UUID) -> PatientRecord:
         self.scheduling.patients.get(patient_id, include_archived=True)

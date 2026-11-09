@@ -4,6 +4,7 @@ from alembic import context
 from sqlalchemy import create_engine, pool, text
 
 from app.core.db import Base
+from app.modules.ai_scribe import models as scribe_models  # noqa: F401
 from app.modules.clinics import models  # noqa: F401
 from app.modules.messaging import models as messaging_models  # noqa: F401
 from app.modules.patients import models as patient_models  # noqa: F401
