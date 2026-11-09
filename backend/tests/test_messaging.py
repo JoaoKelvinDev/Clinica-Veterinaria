@@ -1,4 +1,6 @@
+from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, date, datetime, timedelta
+from threading import Barrier
 from typing import Any
 from uuid import UUID
 from zoneinfo import ZoneInfo
@@ -9,7 +11,8 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.modules.messaging.models import Message, ReminderJob
-from app.modules.messaging.planner import within_window
+from app.modules.messaging.planner import ReminderPlanner, within_window
+from app.modules.messaging.repositories import MessageRepository
 from app.modules.messaging.services import classify
 from app.providers.messaging import MockMessagingProvider
 from app.worker import run_once
@@ -295,3 +298,141 @@ def test_dispatch_now_is_for_reception_or_admin(client: TestClient) -> None:
     result = client.post("/messaging/dispatch-now", headers=headers("reception_a"))
     assert result.status_code == 200
     assert result.json() == {"sent": 0, "skipped": 0, "failed": 0}
+
+
+@pytest.mark.parametrize("hour", [20, 21])
+def test_overdue_reminders_wait_for_next_send_window(
+    client: TestClient, data: FixtureData, database: DatabaseFixture, hour: int
+) -> None:
+    f = family(client)
+    book(client, data, f["patient"]["id"], "2030-01-10T09:00:00-03:00")
+    provider = MockMessagingProvider()
+    result = run_once(database.runtime, provider, datetime(2030, 1, 9, hour, tzinfo=TZ))
+    assert (result.sent, result.skipped, result.failed) == (0, 0, 0)
+    assert provider.sent == []
+    assert jobs(database)[0].status == "pending"
+    assert jobs(database)[0].attempts == 0
+
+    assert run_once(database.runtime, provider, datetime(2030, 1, 10, 7, 59, tzinfo=TZ)).sent == 0
+    assert run_once(database.runtime, provider, datetime(2030, 1, 10, 8, tzinfo=TZ)).sent == 1
+    assert len(provider.sent) == 1
+
+
+def test_reconfirming_near_appointment_replans_without_permission_error(
+    client: TestClient,
+    data: FixtureData,
+    database: DatabaseFixture,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    clock = [datetime(2030, 1, 9, 10, tzinfo=TZ)]
+    monkeypatch.setattr(ReminderPlanner, "_now", lambda self: clock[0])
+    f = family(client)
+    appointment = book(client, data, f["patient"]["id"], "2030-01-09T11:30:00-03:00")
+    url = f"/appointments/{appointment['id']}/status"
+    first = client.put(url, headers=headers(), json={"status": "confirmed"})
+    assert first.status_code == 200, first.text
+    reminder = next(j for j in jobs(database) if j.kind == "appointment_reminder")
+    assert reminder.due_at == clock[0]
+
+    clock[0] += timedelta(minutes=1)
+    second = client.put(url, headers=headers(), json={"status": "confirmed"})
+    assert second.status_code == 200, second.text
+    reminders = [j for j in jobs(database) if j.kind == "appointment_reminder"]
+    assert len(reminders) == 1
+    assert reminders[0].id == reminder.id
+    assert reminders[0].status == "pending"
+    assert reminders[0].due_at == clock[0]
+
+
+@pytest.mark.parametrize("body", ["Preciso falar com a equipe", "confirmo"])
+def test_concurrent_duplicate_inbound_has_one_record_and_one_effect(
+    client: TestClient,
+    data: FixtureData,
+    database: DatabaseFixture,
+    monkeypatch: pytest.MonkeyPatch,
+    body: str,
+) -> None:
+    f = family(client)
+    appointment = book(client, data, f["patient"]["id"], "2030-01-10T09:00:00-03:00")
+    run_once(database.runtime, MockMessagingProvider(), datetime(2030, 1, 9, 12, tzinfo=TZ))
+    barrier = Barrier(2)
+    original = MessageRepository.by_provider_id
+
+    def simultaneous_lookup(
+        self: MessageRepository, provider: str, provider_message_id: str
+    ) -> Message | None:
+        result = original(self, provider, provider_message_id)
+        # Só sincroniza as duas consultas iniciais; a releitura após o conflito é livre.
+        if result is None:
+            barrier.wait(timeout=10)
+        return result
+
+    monkeypatch.setattr(MessageRepository, "by_provider_id", simultaneous_lookup)
+
+    def receive() -> tuple[int, dict[str, Any]]:
+        response = client.post(
+            "/messaging/mock-inbound",
+            headers=headers("reception_a"),
+            json={"phone": PHONE, "body": body, "provider_message_id": "concurrent-in-1"},
+        )
+        return response.status_code, response.json()
+
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        futures = [executor.submit(receive) for _ in range(2)]
+        results = [future.result(timeout=20) for future in futures]
+    assert [status for status, _ in results] == [201, 201], results
+    assert results[0][1]["id"] == results[1][1]["id"]
+    with Session(database.admin) as session:
+        received = session.scalars(
+            select(Message).where(Message.provider_message_id == "concurrent-in-1")
+        ).all()
+        assert len(received) == 1
+    acks = [message for message in outbound(database) if message.reminder_job_id is None]
+    assert len(acks) == (1 if body == "confirmo" else 0)
+    current = client.get(f"/appointments/{appointment['id']}", headers=headers()).json()
+    assert current["status"] == ("confirmed" if body == "confirmo" else "scheduled")
+
+
+def test_duplicate_identifier_from_other_clinic_does_not_expose_message(
+    client: TestClient,
+) -> None:
+    values = {"phone": PHONE, "body": "Mensagem fictícia", "provider_message_id": "shared-id"}
+    first = client.post("/messaging/mock-inbound", headers=headers(), json=values)
+    assert first.status_code == 201
+    second = client.post("/messaging/mock-inbound", headers=headers("admin_b"), json=values)
+    assert second.status_code == 409
+    assert first.json()["id"] not in second.text
+    assert client.get("/messaging", headers=headers("admin_b")).json()["messages"] == []
+
+
+def test_failed_processing_rolls_back_inbound_and_allows_retry(
+    client: TestClient,
+    data: FixtureData,
+    database: DatabaseFixture,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    f = family(client)
+    appointment = book(client, data, f["patient"]["id"], "2030-01-10T09:00:00-03:00")
+    run_once(database.runtime, MockMessagingProvider(), datetime(2030, 1, 9, 12, tzinfo=TZ))
+    original = MockMessagingProvider.send
+
+    def fail_ack(self: MockMessagingProvider, phone: str, body: str) -> str:
+        raise RuntimeError("MOCK: falha antes de enviar a resposta")
+
+    values = {"phone": PHONE, "body": "confirmo", "provider_message_id": "retry-in-1"}
+    monkeypatch.setattr(MockMessagingProvider, "send", fail_ack)
+    with pytest.raises(RuntimeError, match="MOCK: falha"):
+        client.post("/messaging/mock-inbound", headers=headers(), json=values)
+    with Session(database.admin) as session:
+        assert (
+            session.scalar(select(Message).where(Message.provider_message_id == "retry-in-1"))
+            is None
+        )
+    url = f"/appointments/{appointment['id']}"
+    assert client.get(url, headers=headers()).json()["status"] == "scheduled"
+
+    monkeypatch.setattr(MockMessagingProvider, "send", original)
+    retried = client.post("/messaging/mock-inbound", headers=headers(), json=values)
+    assert retried.status_code == 201, retried.text
+    assert client.get(url, headers=headers()).json()["status"] == "confirmed"
+    assert len([message for message in outbound(database) if message.reminder_job_id is None]) == 1

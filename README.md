@@ -1,6 +1,6 @@
 # Sistema Veterinário
 
-Aplicação para clínicas veterinárias pequenas no Brasil. Etapas implementadas: fundação; clínica, usuários e autenticação; tutores e animais; agenda e atendimentos; prontuário; documentos e laudos. Os demais módulos serão desenvolvidos em etapas próprias.
+Aplicação para clínicas veterinárias pequenas no Brasil. Etapas implementadas: fundação; clínica, usuários e autenticação; tutores e animais; agenda e atendimentos; prontuário; documentos e laudos; lembretes e mensagens com provedor simulado. Os demais módulos serão desenvolvidos em etapas próprias.
 
 ## Ambiente gratuito e local
 
@@ -90,6 +90,18 @@ No prontuário, em **Documentos e laudos**, veterinários e auxiliares usam **Ad
 
 Os arquivos ficam no Supabase Storage local, num bucket privado; o navegador só os recebe pelo backend, que confere a permissão e a integridade (SHA-256). Nada é apagado: **Corrigir documento** cria uma nova versão e pode manter o arquivo anterior. A recepção não vê os documentos.
 
+## Lembretes e mensagens — Etapa 5
+
+Abra **Mensagens** para consultar próximos lembretes, envios processados, histórico e respostas que precisam de atenção. O modo **MOCK** é explícito: nenhuma mensagem sai do computador e não há integração real com WhatsApp.
+
+O serviço `worker` do Docker verifica os lembretes a cada minuto. As regras atuais são fixas: pedido de confirmação 24 horas antes da consulta; lembrete 2 horas antes, depois da confirmação; vacina 7 dias antes da próxima dose; retorno 2 dias antes da data informada no prontuário. Os avisos de vacina e retorno são planejados para 9h. Se o prazo já chegou, o planejamento usa a próxima janela permitida antes do evento.
+
+Os lembretes saem a partir de 8h e antes de 20h, em `America/Fortaleza`. Se o worker retomar à noite, aguarda a próxima janela; eventos que já passaram não geram envio. O destinatário é o tutor principal ativo, com telefone e autorização de WhatsApp ainda válidos no momento do envio. Reagendamentos, cancelamentos e correções de vacina ou retorno ajustam os lembretes pendentes.
+
+Administradores e recepção podem disparar lembretes vencidos, simular respostas e marcar pendências como resolvidas. Veterinários e auxiliares consultam. Na simulação, **CONFIRMO** confirma a consulta associada à mensagem mais recente, **CANCELAR** cancela e **SAIR** revoga a autorização dos tutores com aquele telefone na clínica. Respostas não reconhecidas ou sem consulta identificada seguem para a equipe. Repetir o mesmo identificador de mensagem, inclusive simultaneamente, não repete seus efeitos.
+
+As mensagens automáticas evitam detalhes clínicos. Não há envio livre pela equipe, campanhas, agente conversacional, webhook público ou configuração das regras pela interface. Decisões em `docs/decisions/0008-etapa-5-lembretes-e-mensagens.md`; resultados e limitações em `docs/etapa-5-verificacao.md`.
+
 ## Autenticação e isolamento
 
 O frontend autentica pelo cliente oficial Supabase e envia o token à API. A API verifica a identidade com o servidor Auth e consulta o perfil ativo, sua clínica e papel no banco em cada requisição. Não aceita clínica ou papel informados pelo cliente para autorizar acesso.
@@ -113,6 +125,9 @@ Em terminais separados, depois de parar os containers da aplicação com `docker
 # Em backend/
 uv sync --frozen
 uv run --env-file ../.env --frozen uvicorn app.main:app --reload --host 127.0.0.1 --port 8000 --no-access-log
+
+# Em outro terminal, em backend/, para os lembretes MOCK:
+uv run --env-file ../.env --frozen python -m app.worker
 
 # Em frontend/
 npm ci
@@ -170,6 +185,6 @@ Não execute downgrade no banco com dados que precisam ser preservados: o downgr
 
 Ambiente exclusivo de desenvolvimento local, sem HTTPS e sem deploy. Recuperação de senha, convites, edição de e-mail/senha pela interface e múltiplas clínicas por usuário ficam fora desta entrega. A migração para projeto hospedado depende de decisão futura e confirmação de custo zero ou nova autorização.
 
-Os resultados executados e a limitação de revisão visual estão em `docs/etapa-1-verificacao.md` e `docs/etapa-2-verificacao.md`. As decisões aprovadas estão em `docs/decisions/`. O aviso de depreciação HTTPX/TestClient continua documentado; os testes passam sem ocultá-lo.
+Os resultados executados e as limitações de cada etapa estão em `docs/etapa-N-verificacao.md`, incluindo `docs/etapa-5-verificacao.md`. As decisões aprovadas estão em `docs/decisions/`. O aviso de depreciação HTTPX/TestClient continua documentado; os testes passam sem ocultá-lo.
 
 Os commits e o envio ao repositório `JoaoKelvinDev/Clinica-Veterinaria` ficam com o responsável. A relação de arquivos e as instruções para separar as duas entregas estão em `docs/arquivos-por-etapa.md`. A parte financeira empresarial será planejada depois da etapa em andamento, conforme orientação do responsável; não foi implementada nesta entrega.

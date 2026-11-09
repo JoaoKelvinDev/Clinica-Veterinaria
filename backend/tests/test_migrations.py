@@ -21,6 +21,24 @@ def test_migration_can_upgrade_downgrade_and_upgrade() -> None:
         os.environ["MIGRATION_DATABASE_URL"] = test_url
         config = Config("alembic.ini")
         command.upgrade(config, "head")
+        dsn = source.set(database=name, drivername="postgresql").render_as_string(
+            hide_password=False
+        )
+        with psycopg.connect(dsn) as connection:
+            assert connection.execute(
+                "SELECT has_column_privilege('vetsys_app', 'vetsys.reminder_jobs', "
+                "'due_at', 'UPDATE')"
+            ).fetchone() == (True,)
+            assert connection.execute(
+                "SELECT has_column_privilege('vetsys_app', 'vetsys.reminder_jobs', "
+                "'clinic_id', 'UPDATE')"
+            ).fetchone() == (False,)
+        command.downgrade(config, "d4a81f6c9e27")
+        with psycopg.connect(dsn) as connection:
+            assert connection.execute(
+                "SELECT has_column_privilege('vetsys_app', 'vetsys.reminder_jobs', "
+                "'due_at', 'UPDATE')"
+            ).fetchone() == (False,)
         command.downgrade(config, "base")
         command.upgrade(config, "head")
         dsn = source.set(database=name, drivername="postgresql").render_as_string(

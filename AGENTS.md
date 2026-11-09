@@ -435,7 +435,7 @@ Se um comando de teste não puder ser executado no ambiente, informe isso explic
 
 ## 11. Comandos do projeto
 
-Comandos atuais após a Etapa 4b. Consulte `README.md` e os documentos `docs/etapa-N-verificacao.md` de cada etapa. As escolhas aprovadas de autenticação, ambiente gratuito local e isolamento estão em `docs/decisions/0003-etapa-1-auth-e-isolamento.md`; os cadastros estão em `docs/decisions/0004-etapa-2-tutores-e-pacientes.md`; a agenda está em `docs/decisions/0005-etapa-3-agenda-e-atendimentos.md`; o prontuário e suas fontes normativas estão em `docs/decisions/0006-etapa-4-prontuario.md`; documentos e laudos, em `docs/decisions/0007-etapa-4b-documentos.md`.
+Comandos atuais após a Etapa 5. Consulte `README.md` e os documentos `docs/etapa-N-verificacao.md` de cada etapa. As escolhas aprovadas de autenticação, ambiente gratuito local e isolamento estão em `docs/decisions/0003-etapa-1-auth-e-isolamento.md`; os cadastros estão em `docs/decisions/0004-etapa-2-tutores-e-pacientes.md`; a agenda está em `docs/decisions/0005-etapa-3-agenda-e-atendimentos.md`; o prontuário e suas fontes normativas estão em `docs/decisions/0006-etapa-4-prontuario.md`; documentos e laudos, em `docs/decisions/0007-etapa-4b-documentos.md`; lembretes e mensagens simuladas, em `docs/decisions/0008-etapa-5-lembretes-e-mensagens.md`.
 
 Pré-requisitos: Docker Desktop com containers Linux, Node.js 22.20+ da linha 22, npm e uv. O Supabase local não exige login na conta da nuvem. Nenhum projeto hospedado foi criado.
 
@@ -446,7 +446,7 @@ npm ci
 npm run dev
 ```
 
-`npm run dev` inicia Supabase local, configura o ambiente, aplica as migrações e sobe backend/frontend. Aplicação: `http://localhost:5173`. API: `http://localhost:8000/health`. Documentação: `http://localhost:8000/docs`. A rota de saúde continua verificando somente a API.
+`npm run dev` inicia Supabase local, configura o ambiente, aplica as migrações e sobe backend, frontend e worker de lembretes MOCK. Aplicação: `http://localhost:5173`. API: `http://localhost:8000/health`. Documentação: `http://localhost:8000/docs`. A rota de saúde continua verificando somente a API.
 
 Para parar sem apagar dados:
 
@@ -461,6 +461,9 @@ Para executar os aplicativos diretamente na máquina, mantenha Supabase local no
 # Em backend/
 uv sync --frozen
 uv run --env-file ../.env --frozen uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+
+# Em outro terminal, em backend/, para os lembretes MOCK:
+uv run --env-file ../.env --frozen python -m app.worker
 
 # Em frontend/
 npm ci
@@ -539,10 +542,12 @@ O frontend não possui migrações de banco. A primeira clínica e seus usuário
 
 ### Etapa 4b: Documentos e laudos (concluída em 2026-11-03)
 
-- **Objetivo:** guardar a cópia de cada laudo de exame complementar no prontuário (art. 9º, X, da Resolução CFMV nº 1321/2020, com a redação da nº 1653/2025). Aprovada como etapa em 2026-11-03; o plano detalhado ainda precisa de aprovação.
+- **Objetivo:** guardar a cópia de cada laudo de exame complementar no prontuário (art. 9º, X, da Resolução CFMV nº 1321/2020, com a redação da nº 1653/2025). Implementação e verificação registradas na ADR 0007 e em `docs/etapa-4b-verificacao.md`.
 - **Fora do escopo:** pesquisa ou leitura de anexos por IA, que fica para depois das etapas do roadmap.
 
 ### Etapa 5: Lembretes por WhatsApp (com provedor simulado)
+
+Implementação verificada em 2026-11-09, incluindo correções aprovadas de janela de envio, replanejamento e idempotência concorrente. Evidências e limitações em `docs/etapa-5-verificacao.md`; decisões em `docs/decisions/0008-etapa-5-lembretes-e-mensagens.md`.
 
 - **Objetivo:** reduzir faltas e perda de retorno.
 - **Escopo:** `MessagingProvider` com mock, regras de lembrete (consulta, vacina, retorno), jobs agendados, registro de mensagens, atualização de status por resposta simples.

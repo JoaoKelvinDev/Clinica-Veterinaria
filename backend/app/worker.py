@@ -13,11 +13,11 @@ from sqlalchemy import text
 
 from app.core.db import Database, set_context, verify_runtime_role
 from app.core.repositories import ClinicContext
+from app.modules.messaging.schemas import DispatchResult
+from app.modules.messaging.services import MessagingService
 
 # O mapeamento precisa de todos os modelos referenciados pelas chaves estrangeiras.
 from app.modules.records import models as _record_models  # noqa: F401
-from app.modules.messaging.schemas import DispatchResult
-from app.modules.messaging.services import MessagingService
 from app.providers.messaging import MessagingProvider, MockMessagingProvider
 
 INTERVAL_SECONDS = 60
