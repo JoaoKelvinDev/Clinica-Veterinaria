@@ -14,6 +14,7 @@ from app.modules.ai_scribe.api import router as scribe_router
 from app.modules.clinics.api import router
 from app.modules.messaging.api import router as messaging_router
 from app.modules.patients.api import router as patients_router
+from app.modules.quotes.api import router as quotes_router
 from app.modules.records.api import router as records_router
 from app.modules.scheduling.api import router as scheduling_router
 from app.modules.tutors.api import router as tutors_router
@@ -39,7 +40,7 @@ def create_app(
     stt_provider: SpeechToTextProvider | None = None,
 ) -> FastAPI:
     config = settings or Settings.from_environment()
-    application = FastAPI(title="Sistema Veterinário", version="0.8.0")
+    application = FastAPI(title="Sistema Veterinário", version="0.9.0")
     application.state.database = database or (
         Database(config.database_url) if config.database_url else None
     )
@@ -93,6 +94,7 @@ def create_app(
     application.include_router(records_router)
     application.include_router(messaging_router)
     application.include_router(scribe_router)
+    application.include_router(quotes_router)
     return application
 
 
