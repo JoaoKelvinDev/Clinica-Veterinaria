@@ -17,6 +17,7 @@ import {
 import type { PatientRecord, RecordEntry, VaccineRecord, WeightRecord } from './records-api';
 import { reveal } from './reveal';
 import { PatientDocuments } from './PatientDocuments';
+import { AiScribe } from './AiScribe';
 
 type Form =
   | { kind: 'entry'; supersedes: RecordEntry | null }
@@ -458,6 +459,17 @@ export function Records({
                 <EntryView key={item.id} item={item} />
               ))}
             </section>
+          )}
+
+          {record.clinical_access && (
+            <AiScribe
+              token={token}
+              user={user}
+              patientId={target.patientId}
+              encounters={encounters}
+              defaultEncounter={defaultEncounter}
+              onApproved={() => setRevision((current) => current + 1)}
+            />
           )}
 
           <h3>Atendimentos</h3>

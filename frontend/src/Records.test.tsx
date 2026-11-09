@@ -141,5 +141,6 @@ describe('Prontuário', () => {
       expect(screen.queryByRole('button', { name: 'Novo registro clínico' })).toBeNull(),
     );
     expect(screen.queryByRole('heading', { name: 'Pesagens' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Abrir rascunhos' })).toBeNull();
   });
 });

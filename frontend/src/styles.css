@@ -350,6 +350,15 @@ legend {
   grid-template-columns: 2fr 1fr;
   gap: 16px;
 }
+.scribe-review {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+  align-items: start;
+  overflow-wrap: anywhere;
+}
+.scribe-review > form {
+  display: grid;
+  gap: 16px;
+}
 .search-form,
 .clinic-form {
   grid-template-columns: minmax(0, 1fr) auto;
