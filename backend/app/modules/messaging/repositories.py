@@ -2,6 +2,7 @@ from collections.abc import Sequence
 from datetime import datetime
 from uuid import UUID
 
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
 from app.core.repositories import ClinicContext, TenantRepository
@@ -57,6 +58,26 @@ class MessageRepository(TenantRepository[Message]):
             self._select().where(
                 Message.provider == provider, Message.provider_message_id == provider_message_id
             )
+        )
+
+    def insert_inbound_once(self, message: Message) -> Message | None:
+        return self.session.scalar(
+            insert(Message)
+            .values(
+                clinic_id=self.context.clinic_id,
+                direction="inbound",
+                status="received",
+                provider=message.provider,
+                provider_message_id=message.provider_message_id,
+                phone=message.phone,
+                body=message.body,
+                tutor_id=message.tutor_id,
+                appointment_id=message.appointment_id,
+                intent=message.intent,
+                needs_attention=message.needs_attention,
+            )
+            .on_conflict_do_nothing(constraint="uq_message_provider_id")
+            .returning(Message)
         )
 
     def latest_outbound_about_appointment(self, phone: str) -> Sequence[Message]:

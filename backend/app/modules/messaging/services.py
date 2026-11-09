@@ -9,13 +9,14 @@ from zoneinfo import ZoneInfo
 
 from sqlalchemy.orm import Session
 
-from app.core.errors import AccessDenied, InvalidData, ResourceNotFound
+from app.core.errors import AccessDenied, BusinessConflict, InvalidData, ResourceNotFound
 from app.core.permissions import require_registry_writer
 from app.core.repositories import ClinicContext
 from app.modules.clinics.models import User
 from app.modules.clinics.repositories import ClinicRepository
 from app.modules.clinics.services import ClinicService
 from app.modules.messaging.models import Message, ReminderJob, ReminderKind, ReminderStatus
+from app.modules.messaging.planner import within_window
 from app.modules.messaging.repositories import MessageRepository, ReminderRepository
 from app.modules.messaging.schemas import (
     DispatchResult,
@@ -148,6 +149,9 @@ class MessagingService:
 
     def dispatch_due(self, now: datetime | None = None, limit: int = 50) -> DispatchResult:
         now = now or datetime.now(UTC)
+        # O worker pode retomar depois de horas parado, com lembretes já vencidos.
+        if within_window(now) != now:
+            return DispatchResult(sent=0, skipped=0, failed=0)
         sent = skipped = failed = 0
         clinic = self.clinics.current().name
         for job in self.reminders.due(now, limit):
@@ -250,34 +254,40 @@ class MessagingService:
         intent = classify(body)
         appointment_id = self._pending_appointment(phone, now) if tutor else None
         needs_attention = tutor is None or intent == "unknown"
+        if intent in {"confirm", "cancel"} and appointment_id is None:
+            needs_attention = True
+        inbound = self.messages.insert_inbound_once(
+            Message(
+                clinic_id=self.messages.context.clinic_id,
+                direction="inbound",
+                status="received",
+                provider=self.provider.name,
+                provider_message_id=provider_message_id,
+                phone=phone,
+                body=body,
+                tutor_id=tutor.id if tutor else None,
+                appointment_id=appointment_id,
+                intent=intent,
+                needs_attention=needs_attention,
+            )
+        )
+        if inbound is None:
+            existing = self.messages.by_provider_id(self.provider.name, provider_message_id)
+            if existing is None:
+                # A unicidade é global, mas a releitura continua restrita à clínica.
+                raise BusinessConflict("Identificador de mensagem indisponível.")
+            return self._read(existing)
+        # Reserva a entrada antes de qualquer efeito, na mesma transação. Uma entrega
+        # concorrente espera o commit e devolve o registro, sem confirmar ou responder de novo.
         if intent == "opt_out" and tutors:
             for item in tutors:
                 if item.whatsapp_opt_in:
                     self.tutors.consent(actor, item.id, ConsentInput(granted=False))
-        elif intent in {"confirm", "cancel"}:
-            if appointment_id is None:
-                needs_attention = True
-            else:
-                status = (
-                    AppointmentStatus.CONFIRMED
-                    if intent == "confirm"
-                    else AppointmentStatus.CANCELLED
-                )
-                self.scheduling.change_status(actor, appointment_id, status)
-        inbound = Message(
-            clinic_id=self.messages.context.clinic_id,
-            direction="inbound",
-            status="received",
-            provider=self.provider.name,
-            provider_message_id=provider_message_id,
-            phone=phone,
-            body=body,
-            tutor_id=tutor.id if tutor else None,
-            appointment_id=appointment_id,
-            intent=intent,
-            needs_attention=needs_attention,
-        )
-        self.messages.save(inbound)
+        elif intent in {"confirm", "cancel"} and appointment_id is not None:
+            status = (
+                AppointmentStatus.CONFIRMED if intent == "confirm" else AppointmentStatus.CANCELLED
+            )
+            self.scheduling.change_status(actor, appointment_id, status)
         if not needs_attention and intent in ACKS:
             self._reply(phone, ACKS[intent], tutor, appointment_id)
         return self._read(inbound)
