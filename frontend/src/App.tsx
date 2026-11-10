@@ -11,16 +11,18 @@ import { Patients } from './Patients';
 import { Scheduling } from './Scheduling';
 import { Messaging } from './Messaging';
 import { Quotes } from './Quotes';
+import { Inventory } from './Inventory';
 import { Records } from './Records';
 import type { RecordTarget } from './Records';
 
-type View = 'clinic' | 'tutors' | 'patients' | 'scheduling' | 'messaging' | 'quotes';
+type View = 'clinic' | 'tutors' | 'patients' | 'scheduling' | 'messaging' | 'quotes' | 'inventory';
 const navItems: [View, string][] = [
   ['scheduling', 'Agenda'],
   ['tutors', 'Tutores'],
   ['patients', 'Animais'],
   ['messaging', 'Mensagens'],
   ['quotes', 'Orçamentos'],
+  ['inventory', 'Estoque'],
   ['clinic', 'Clínica e equipe'],
 ];
 
@@ -247,6 +249,7 @@ export function App({ auth = defaultAuth }: { auth?: AuthGateway | null }) {
               onOpenRecord={setRecordTarget}
             />
           )}
+          {shown === 'inventory' && <Inventory token={session.access_token} user={user} />}
           {shown === 'clinic' &&
             (user.role === 'admin' ? (
               <>
