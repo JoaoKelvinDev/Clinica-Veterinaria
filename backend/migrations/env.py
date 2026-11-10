@@ -5,6 +5,7 @@ from sqlalchemy import create_engine, pool, text
 
 from app.core.db import Base
 from app.modules.ai_scribe import models as scribe_models  # noqa: F401
+from app.modules.billing import models as billing_models  # noqa: F401
 from app.modules.clinics import models  # noqa: F401
 from app.modules.inventory import models as inventory_models  # noqa: F401
 from app.modules.messaging import models as messaging_models  # noqa: F401

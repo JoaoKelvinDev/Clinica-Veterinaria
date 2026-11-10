@@ -67,7 +67,8 @@ def data(database: DatabaseFixture) -> FixtureData:
     with database.admin.begin() as connection:
         connection.execute(
             text(
-                "TRUNCATE vetsys.record_exports, vetsys.stock_movements, vetsys.lots, "
+                "TRUNCATE vetsys.financial_entries, vetsys.record_exports, "
+                "vetsys.stock_movements, vetsys.lots, "
                 "vetsys.products, "
                 "vetsys.quote_items, vetsys.quotes, vetsys.ai_drafts, "
                 "vetsys.messages, vetsys.reminder_jobs, "
