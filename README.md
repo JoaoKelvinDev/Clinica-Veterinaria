@@ -1,6 +1,6 @@
 # Sistema Veterinário
 
-Aplicação para clínicas veterinárias pequenas no Brasil. Etapas implementadas: fundação; clínica, usuários e autenticação; tutores e animais; agenda e atendimentos; prontuário; documentos e laudos; lembretes e mensagens com provedor simulado; scribe com provedores simulados; orçamentos. Os demais módulos serão desenvolvidos em etapas próprias.
+Aplicação para clínicas veterinárias pequenas no Brasil. Etapas implementadas: fundação; clínica, usuários e autenticação; tutores e animais; agenda e atendimentos; prontuário; documentos e laudos; lembretes e mensagens com provedor simulado; scribe com provedores simulados; orçamentos; estoque. As integrações e funções futuras serão desenvolvidas em etapas próprias.
 
 ## Ambiente gratuito e local
 
@@ -128,6 +128,20 @@ A validade é opcional e vale até o fim do dia informado em `America/Fortaleza`
 
 Limites desta entrega: 100 itens por orçamento; quantidade máxima de 999.999,999; subtotal e valores em centavos limitados a 1.000.000.000.000. Não há envio por WhatsApp, PDF, assinatura digital, catálogo, baixa de estoque ou emissão fiscal. Decisões em `docs/decisions/0010-etapa-7-orcamentos.md`; resultados e comandos em `docs/etapa-7-verificacao.md`.
 
+## Estoque — Etapa 8
+
+Após entrar, abra **Estoque**. O administrador cadastra produtos com uma única unidade de controle (por exemplo, un, mL ou g), estoque mínimo e exigência de validade. Quantidades têm até três casas decimais; use vírgula ou ponto, sem separador de milhar. O limite por lançamento ou mínimo é 999.999,999. Unidade e exigência de validade ficam preservadas após a primeira movimentação; nome e mínimo continuam editáveis.
+
+Administrador, veterinário e auxiliar cadastram lotes, registram entradas e fazem saídas; recepção consulta. O código do lote é único por produto e fica preservado junto com sua validade. Cadastre o lote e depois registre a entrada; novos recebimentos podem usar o mesmo lote. Uma entrada normal em lote vencido é recusada.
+
+**Registrar saída FEFO** consome os lotes válidos que vencem antes, com lotes sem validade por último. A validade inclui o último dia informado, no fuso `America/Fortaleza`. Se faltar saldo disponível, nenhuma baixa é registrada. A tela separa saldo físico, disponível e vencido; vencidos só saem do físico após ajuste de descarte.
+
+Somente o administrador usa **Ajustar inventário**: quantidade positiva acrescenta; negativa reduz. Informe a diferença, não o saldo final, e um motivo. **Corrigir lançamento** cria um novo ajuste vinculado ao original. O histórico guarda autor, motivo e horário, sem permitir edição ou exclusão. **Arquivar produto** exige saldo físico zero e mantém a consulta do histórico no filtro Arquivados.
+
+Alertas indicam disponível abaixo do mínimo, saldo em lotes que vencem nos próximos 30 dias e vencidos com saldo. São recalculados ao carregar/atualizar a tela. Quando outra operação alterar o produto, uma versão antiga recebe conflito: use **Atualizar produto** e confira o saldo antes de tentar novamente.
+
+Sem medicamentos controlados, compras, múltiplos depósitos, custos financeiros, fiscal, mensagens ou baixa automática por orçamento/vacina. Decisões em `docs/decisions/0011-etapa-8-estoque.md`; resultados e comandos em `docs/etapa-8-verificacao.md`.
+
 ## Autenticação e isolamento
 
 O frontend autentica pelo cliente oficial Supabase e envia o token à API. A API verifica a identidade com o servidor Auth e consulta o perfil ativo, sua clínica e papel no banco em cada requisição. Não aceita clínica ou papel informados pelo cliente para autorizar acesso.
@@ -211,6 +225,6 @@ Não execute downgrade no banco com dados que precisam ser preservados: o downgr
 
 Ambiente exclusivo de desenvolvimento local, sem HTTPS e sem deploy. Recuperação de senha, convites, edição de e-mail/senha pela interface e múltiplas clínicas por usuário ficam fora desta entrega. A migração para projeto hospedado depende de decisão futura e confirmação de custo zero ou nova autorização.
 
-Os resultados executados e as limitações de cada etapa estão em `docs/etapa-N-verificacao.md`, incluindo `docs/etapa-7-verificacao.md`. As decisões aprovadas estão em `docs/decisions/`. O aviso de depreciação HTTPX/TestClient continua documentado; os testes passam sem ocultá-lo.
+Os resultados executados e as limitações de cada etapa estão em `docs/etapa-N-verificacao.md`, incluindo `docs/etapa-8-verificacao.md`. As decisões aprovadas estão em `docs/decisions/`. O aviso de depreciação HTTPX/TestClient continua documentado; os testes passam sem ocultá-lo.
 
 Os commits e o envio ao repositório `JoaoKelvinDev/Clinica-Veterinaria` ficam com o responsável. A relação de arquivos e as instruções para separar as duas entregas estão em `docs/arquivos-por-etapa.md`. A parte financeira empresarial será planejada depois da etapa em andamento, conforme orientação do responsável; não foi implementada nesta entrega.

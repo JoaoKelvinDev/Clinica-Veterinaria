@@ -435,7 +435,7 @@ Se um comando de teste não puder ser executado no ambiente, informe isso explic
 
 ## 11. Comandos do projeto
 
-Comandos atuais após a Etapa 7. Consulte `README.md` e os documentos `docs/etapa-N-verificacao.md` de cada etapa. As escolhas aprovadas de autenticação, ambiente gratuito local e isolamento estão em `docs/decisions/0003-etapa-1-auth-e-isolamento.md`; os cadastros estão em `docs/decisions/0004-etapa-2-tutores-e-pacientes.md`; a agenda está em `docs/decisions/0005-etapa-3-agenda-e-atendimentos.md`; o prontuário e suas fontes normativas estão em `docs/decisions/0006-etapa-4-prontuario.md`; documentos e laudos, em `docs/decisions/0007-etapa-4b-documentos.md`; lembretes e mensagens simuladas, em `docs/decisions/0008-etapa-5-lembretes-e-mensagens.md`; scribe simulado, em `docs/decisions/0009-etapa-6-scribe-simulado.md`; orçamentos, em `docs/decisions/0010-etapa-7-orcamentos.md`.
+Comandos atuais após a Etapa 8. Consulte `README.md` e os documentos `docs/etapa-N-verificacao.md` de cada etapa. As escolhas aprovadas de autenticação, ambiente gratuito local e isolamento estão em `docs/decisions/0003-etapa-1-auth-e-isolamento.md`; os cadastros estão em `docs/decisions/0004-etapa-2-tutores-e-pacientes.md`; a agenda está em `docs/decisions/0005-etapa-3-agenda-e-atendimentos.md`; o prontuário e suas fontes normativas estão em `docs/decisions/0006-etapa-4-prontuario.md`; documentos e laudos, em `docs/decisions/0007-etapa-4b-documentos.md`; lembretes e mensagens simuladas, em `docs/decisions/0008-etapa-5-lembretes-e-mensagens.md`; scribe simulado, em `docs/decisions/0009-etapa-6-scribe-simulado.md`; orçamentos, em `docs/decisions/0010-etapa-7-orcamentos.md`; estoque, em `docs/decisions/0011-etapa-8-estoque.md`.
 
 Pré-requisitos: Docker Desktop com containers Linux, Node.js 22.20+ da linha 22, npm e uv. O Supabase local não exige login na conta da nuvem. Nenhum projeto hospedado foi criado.
 
@@ -571,6 +571,8 @@ Plano aprovado e implementação verificada em 2026-11-09: itens manuais, cálcu
 - **Fora do escopo:** cobrança, pagamento, envio automatizado (se não aprovado).
 
 ### Etapa 8: Estoque
+
+Plano aprovado e implementação verificada em 2026-11-09: produtos, lotes, movimentações imutáveis, baixa FEFO, ajustes e alertas. Evidências e limitações em `docs/etapa-8-verificacao.md`; decisões em `docs/decisions/0011-etapa-8-estoque.md`.
 
 - **Escopo:** produtos, lotes, movimentações, FEFO, alertas de validade e mínimo.
 - **Fora do escopo:** controlados, compras automáticas, fiscal.
