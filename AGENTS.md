@@ -370,6 +370,7 @@ Regras:
 ### 8.7 Caixa e fiscal
 
 - `PENDENTE` e **fora do escopo até decisão explícita**. A emissão de NFS-e depende do município e normalmente envolve provedor externo. Não implemente emissão fiscal sem plano aprovado.
+- Exceção aprovada: financeiro básico manual da Etapa 10, limitado a recebimentos e despesas já realizados, histórico imutável e estorno administrativo; ver ADR 0013. Caixa completo, contas futuras e emissão fiscal permanecem fora do escopo.
 
 ---
 
@@ -435,7 +436,7 @@ Se um comando de teste não puder ser executado no ambiente, informe isso explic
 
 ## 11. Comandos do projeto
 
-Comandos atuais após a Etapa 9. Consulte `README.md` e os documentos `docs/etapa-N-verificacao.md` de cada etapa. As escolhas aprovadas de autenticação, ambiente gratuito local e isolamento estão em `docs/decisions/0003-etapa-1-auth-e-isolamento.md`; os cadastros estão em `docs/decisions/0004-etapa-2-tutores-e-pacientes.md`; a agenda está em `docs/decisions/0005-etapa-3-agenda-e-atendimentos.md`; o prontuário e suas fontes normativas estão em `docs/decisions/0006-etapa-4-prontuario.md`; documentos e laudos, em `docs/decisions/0007-etapa-4b-documentos.md`; lembretes e mensagens simuladas, em `docs/decisions/0008-etapa-5-lembretes-e-mensagens.md`; scribe simulado, em `docs/decisions/0009-etapa-6-scribe-simulado.md`; orçamentos, em `docs/decisions/0010-etapa-7-orcamentos.md`; estoque, em `docs/decisions/0011-etapa-8-estoque.md`; exportação em PDF, em `docs/decisions/0012-etapa-9-prontuario-pdf.md`.
+Comandos atuais após a Etapa 10. Consulte `README.md` e os documentos `docs/etapa-N-verificacao.md` de cada etapa. As escolhas aprovadas de autenticação, ambiente gratuito local e isolamento estão em `docs/decisions/0003-etapa-1-auth-e-isolamento.md`; os cadastros estão em `docs/decisions/0004-etapa-2-tutores-e-pacientes.md`; a agenda está em `docs/decisions/0005-etapa-3-agenda-e-atendimentos.md`; o prontuário e suas fontes normativas estão em `docs/decisions/0006-etapa-4-prontuario.md`; documentos e laudos, em `docs/decisions/0007-etapa-4b-documentos.md`; lembretes e mensagens simuladas, em `docs/decisions/0008-etapa-5-lembretes-e-mensagens.md`; scribe simulado, em `docs/decisions/0009-etapa-6-scribe-simulado.md`; orçamentos, em `docs/decisions/0010-etapa-7-orcamentos.md`; estoque, em `docs/decisions/0011-etapa-8-estoque.md`; exportação em PDF, em `docs/decisions/0012-etapa-9-prontuario-pdf.md`; financeiro básico manual, em `docs/decisions/0013-etapa-10-financeiro.md`.
 
 Pré-requisitos: Docker Desktop com containers Linux, Node.js 22.20+ da linha 22, npm e uv. O Supabase local não exige login na conta da nuvem. Nenhum projeto hospedado foi criado.
 
@@ -584,9 +585,16 @@ Plano aprovado e implementação verificada em 2026-11-10: PDF preservado por em
 - **Escopo:** preparação por veterinário, cópia PDF imutável, histórico e downloads PDF/ZIP com controle de acesso.
 - **Fora do escopo:** certificado digital, recibo eletrônico, automação de pedidos/prazos e envio externo.
 
+### Etapa 10: Financeiro básico manual
+
+Plano aprovado e implementação verificada em 2026-11-10: recebimentos e despesas já realizados, centavos exatos, filtros, totais e histórico imutável com estorno administrativo na data financeira original. Administradores têm acesso completo; recepção somente a recebimentos; veterinários e auxiliares sem acesso. Evidências e limites em `docs/etapa-10-verificacao.md`; decisões em `docs/decisions/0013-etapa-10-financeiro.md`. Conferência visual manual pendente por indisponibilidade de navegador na sessão; testes automatizados da interface executados.
+
+- **Escopo:** registros manuais, vínculos opcionais com tutor/paciente, consulta por período e correção por estorno e novo lançamento.
+- **Fora do escopo:** contas futuras, parcelas, saldo inicial, abertura/fechamento de caixa, pagamentos, conciliação, fiscal e geração automática por orçamento/estoque.
+
 ### Etapas futuras (sem planejamento ainda)
 
-Integração real de WhatsApp, provedores reais de IA, assinatura digital e fluxo de entrega do prontuário, caixa e fiscal, relatórios, agente conversacional.
+Integração real de WhatsApp, provedores reais de IA, assinatura digital e fluxo de entrega do prontuário, ampliação de caixa e fiscal, relatórios, agente conversacional.
 
 ---
 

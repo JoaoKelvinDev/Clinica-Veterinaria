@@ -1,6 +1,6 @@
 # Sistema Veterinário
 
-Aplicação para clínicas veterinárias pequenas no Brasil. Etapas implementadas: fundação; clínica, usuários e autenticação; tutores e animais; agenda e atendimentos; prontuário; documentos e laudos; lembretes e mensagens com provedor simulado; scribe com provedores simulados; orçamentos; estoque; exportação do prontuário em PDF. As integrações e funções futuras serão desenvolvidas em etapas próprias.
+Aplicação para clínicas veterinárias pequenas no Brasil. Etapas implementadas: fundação; clínica, usuários e autenticação; tutores e animais; agenda e atendimentos; prontuário; documentos e laudos; lembretes e mensagens com provedor simulado; scribe com provedores simulados; orçamentos; estoque; exportação do prontuário em PDF; financeiro básico manual. As integrações e funções futuras serão desenvolvidas em etapas próprias.
 
 ## Ambiente gratuito e local
 
@@ -155,6 +155,18 @@ Administradores, veterinários e auxiliares baixam cópias existentes; recepçã
 **A cópia não possui assinatura digital incorporada.** Conferir identidade/autorização de quem solicita, assinar e obter comprovante de recebimento continuam sendo procedimentos manuais da clínica. O download não registra entrega ao tutor. CPF/CNPJ recebem conferência de formato, sem comprovação de titularidade.
 
 Limites: PDF até 10 MiB e PDF mais anexos até 100 MiB. O sistema recusa excesso sem cortar o histórico. Caracteres indisponíveis na fonte são representados por `[U+XXXX]`. Não há envio por WhatsApp/e-mail, assinatura com certificado, recibo eletrônico ou gestão de pedidos/prazos. Decisões em `docs/decisions/0012-etapa-9-prontuario-pdf.md`; evidências em `docs/etapa-9-verificacao.md`.
+
+## Financeiro básico manual — Etapa 10
+
+Abra **Financeiro** para registrar valores **já recebidos ou pagos**, com descrição, categoria, valor em reais, data financeira e forma de pagamento. Dinheiro, Pix, cartões e transferência são classificações manuais: o sistema não movimenta dinheiro. Tutor e animal são opcionais; se informar ambos, devem estar vinculados no cadastro. Datas futuras não são aceitas.
+
+Administradores registram e consultam recebimentos e despesas, veem os totais completos e fazem estornos. A recepção registra e consulta somente recebimentos e seus totais; não acessa despesas, diferença geral ou estorno. Veterinários e auxiliares não têm acesso ao financeiro nesta etapa. As restrições também são aplicadas pela API e pelo banco.
+
+Use os filtros de período, descrição, categoria, forma, tipo e situação. A tela começa no mês atual; para ver registros antigos, ajuste o período. Os totais consideram todos os resultados filtrados, independentemente da página, e excluem lançamentos estornados. A diferença apresentada **não é lucro contábil nem saldo bancário**.
+
+Lançamentos não são editados nem apagados. Para corrigir, o administrador escolhe **Estornar**, informa o motivo e registra um novo lançamento. O original permanece com sua autoria, e o estorno guarda autor e horário próprios. O estorno corrige os totais da **data financeira original**, mesmo quando registrado depois. Ele é administrativo: uma devolução real deve ser registrada manualmente como despesa.
+
+Orçamentos aprovados não geram lançamentos automaticamente. Não há contas futuras a pagar/receber, parcelamento, conciliação, saldo inicial, abertura/fechamento de caixa, pagamento online ou emissão fiscal. Decisões na [ADR 0013](docs/decisions/0013-etapa-10-financeiro.md); testes, comandos e limites em [Verificação da Etapa 10](docs/etapa-10-verificacao.md).
 
 ## Autenticação e isolamento
 
