@@ -18,6 +18,7 @@ import type { PatientRecord, RecordEntry, VaccineRecord, WeightRecord } from './
 import { reveal } from './reveal';
 import { PatientDocuments } from './PatientDocuments';
 import { AiScribe } from './AiScribe';
+import { RecordExports } from './RecordExports';
 
 type Form =
   | { kind: 'entry'; supersedes: RecordEntry | null }
@@ -219,6 +220,9 @@ export function Records({
               O responsável principal está sem CPF ou endereço. Esses dados serão exigidos para
               emitir documentos do prontuário.
             </p>
+          )}
+          {record.clinical_access && (
+            <RecordExports token={token} user={user} patientId={target.patientId} />
           )}
           {!record.clinical_access && (
             <p className="muted">

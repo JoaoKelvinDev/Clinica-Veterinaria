@@ -408,6 +408,15 @@ legend {
   background: #fff7e8;
   color: #754300;
 }
+.export-panel {
+  display: grid;
+  gap: 16px;
+  margin-top: 16px;
+  min-width: 0;
+}
+.export-hash {
+  overflow-wrap: anywhere;
+}
 .inventory button.text-button {
   padding: 0;
   background: transparent;
