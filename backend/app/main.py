@@ -12,6 +12,7 @@ from app.core.db import Database
 from app.core.errors import DomainError
 from app.modules.ai_scribe.api import router as scribe_router
 from app.modules.clinics.api import router
+from app.modules.inventory.api import router as inventory_router
 from app.modules.messaging.api import router as messaging_router
 from app.modules.patients.api import router as patients_router
 from app.modules.quotes.api import router as quotes_router
@@ -40,7 +41,7 @@ def create_app(
     stt_provider: SpeechToTextProvider | None = None,
 ) -> FastAPI:
     config = settings or Settings.from_environment()
-    application = FastAPI(title="Sistema Veterinário", version="0.9.0")
+    application = FastAPI(title="Sistema Veterinário", version="0.10.0")
     application.state.database = database or (
         Database(config.database_url) if config.database_url else None
     )
@@ -95,6 +96,7 @@ def create_app(
     application.include_router(messaging_router)
     application.include_router(scribe_router)
     application.include_router(quotes_router)
+    application.include_router(inventory_router)
     return application
 
 
