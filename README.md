@@ -1,6 +1,6 @@
 # Sistema Veterinário
 
-Aplicação para clínicas veterinárias pequenas no Brasil. Etapas implementadas: fundação; clínica, usuários e autenticação; tutores e animais; agenda e atendimentos; prontuário; documentos e laudos; lembretes e mensagens com provedor simulado; scribe com provedores simulados; orçamentos; estoque. As integrações e funções futuras serão desenvolvidas em etapas próprias.
+Aplicação para clínicas veterinárias pequenas no Brasil. Etapas implementadas: fundação; clínica, usuários e autenticação; tutores e animais; agenda e atendimentos; prontuário; documentos e laudos; lembretes e mensagens com provedor simulado; scribe com provedores simulados; orçamentos; estoque; exportação do prontuário em PDF. As integrações e funções futuras serão desenvolvidas em etapas próprias.
 
 ## Ambiente gratuito e local
 
@@ -82,7 +82,7 @@ Cada registro pertence a um atendimento e guarda data, hora, local, autor e CRMV
 
 Veterinários registram prontuário e vacinas; auxiliares registram peso; administradores e auxiliares consultam. A recepção vê apenas as datas dos atendimentos. Vacinas exigem nome, partida, fabricante, dose, fabricação e validade. Leituras e registros ficam na auditoria, sem conteúdo clínico.
 
-Ainda não há exportação em PDF ou assinatura com certificado digital.
+A exportação em PDF está descrita na Etapa 9 abaixo. Assinatura com certificado digital não está implementada.
 
 ## Documentos e laudos — Etapa 4b
 
@@ -141,6 +141,20 @@ Somente o administrador usa **Ajustar inventário**: quantidade positiva acresce
 Alertas indicam disponível abaixo do mínimo, saldo em lotes que vencem nos próximos 30 dias e vencidos com saldo. São recalculados ao carregar/atualizar a tela. Quando outra operação alterar o produto, uma versão antiga recebe conflito: use **Atualizar produto** e confira o saldo antes de tentar novamente.
 
 Sem medicamentos controlados, compras, múltiplos depósitos, custos financeiros, fiscal, mensagens ou baixa automática por orçamento/vacina. Decisões em `docs/decisions/0011-etapa-8-estoque.md`; resultados e comandos em `docs/etapa-8-verificacao.md`.
+
+## Prontuário em PDF — Etapa 9
+
+No prontuário, abra **Ver exportações em PDF**. Veterinários ativos com CRMV usam **Preparar novo PDF**: selecione um responsável vinculado com CPF e endereço preenchidos; informe endereço, telefone e e-mail profissionais e, quando aplicável, razão social, CNPJ e registro do estabelecimento no CRMV. Confira os dados e confirme a ciência de assinatura e entrega manuais.
+
+O PDF inclui identificação, atendimentos, registros vigentes, pesos, vacinas, prescrições e documentos externos. Versões anteriores aparecem em seção separada, com seus motivos de correção. Rascunhos de IA não aprovados ficam fora. Cada emissão preserva seu próprio arquivo: baixar novamente entrega os mesmos bytes, mesmo após correções posteriores. Prepare uma nova emissão para incluir alterações.
+
+**Baixar PDF e anexos (ZIP)** inclui o PDF, os arquivos originais disponíveis e um manifesto com hashes. Os originais ficam separados e não são convertidos ou mesclados. Documentos registrados apenas como resumo são identificados como sem arquivo original; um resumo não substitui a cópia de um laudo ausente.
+
+Administradores, veterinários e auxiliares baixam cópias existentes; recepção não acessa as exportações. Geração e downloads são auditados. Os arquivos ficam no Storage privado e seus hashes são conferidos antes do download.
+
+**A cópia não possui assinatura digital incorporada.** Conferir identidade/autorização de quem solicita, assinar e obter comprovante de recebimento continuam sendo procedimentos manuais da clínica. O download não registra entrega ao tutor. CPF/CNPJ recebem conferência de formato, sem comprovação de titularidade.
+
+Limites: PDF até 10 MiB e PDF mais anexos até 100 MiB. O sistema recusa excesso sem cortar o histórico. Caracteres indisponíveis na fonte são representados por `[U+XXXX]`. Não há envio por WhatsApp/e-mail, assinatura com certificado, recibo eletrônico ou gestão de pedidos/prazos. Decisões em `docs/decisions/0012-etapa-9-prontuario-pdf.md`; evidências em `docs/etapa-9-verificacao.md`.
 
 ## Autenticação e isolamento
 
@@ -225,6 +239,6 @@ Não execute downgrade no banco com dados que precisam ser preservados: o downgr
 
 Ambiente exclusivo de desenvolvimento local, sem HTTPS e sem deploy. Recuperação de senha, convites, edição de e-mail/senha pela interface e múltiplas clínicas por usuário ficam fora desta entrega. A migração para projeto hospedado depende de decisão futura e confirmação de custo zero ou nova autorização.
 
-Os resultados executados e as limitações de cada etapa estão em `docs/etapa-N-verificacao.md`, incluindo `docs/etapa-8-verificacao.md`. As decisões aprovadas estão em `docs/decisions/`. O aviso de depreciação HTTPX/TestClient continua documentado; os testes passam sem ocultá-lo.
+Os resultados executados e as limitações de cada etapa estão em `docs/etapa-N-verificacao.md`, incluindo `docs/etapa-9-verificacao.md`. As decisões aprovadas estão em `docs/decisions/`. O aviso de depreciação HTTPX/TestClient continua documentado; os testes passam sem ocultá-lo.
 
 Os commits e o envio ao repositório `JoaoKelvinDev/Clinica-Veterinaria` ficam com o responsável. A relação de arquivos e as instruções para separar as duas entregas estão em `docs/arquivos-por-etapa.md`. A parte financeira empresarial será planejada depois da etapa em andamento, conforme orientação do responsável; não foi implementada nesta entrega.
