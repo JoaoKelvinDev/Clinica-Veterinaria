@@ -12,10 +12,19 @@ import { Scheduling } from './Scheduling';
 import { Messaging } from './Messaging';
 import { Quotes } from './Quotes';
 import { Inventory } from './Inventory';
+import { Financial } from './Financial';
 import { Records } from './Records';
 import type { RecordTarget } from './Records';
 
-type View = 'clinic' | 'tutors' | 'patients' | 'scheduling' | 'messaging' | 'quotes' | 'inventory';
+type View =
+  | 'clinic'
+  | 'tutors'
+  | 'patients'
+  | 'scheduling'
+  | 'messaging'
+  | 'quotes'
+  | 'inventory'
+  | 'financial';
 const navItems: [View, string][] = [
   ['scheduling', 'Agenda'],
   ['tutors', 'Tutores'],
@@ -23,6 +32,7 @@ const navItems: [View, string][] = [
   ['messaging', 'Mensagens'],
   ['quotes', 'Orçamentos'],
   ['inventory', 'Estoque'],
+  ['financial', 'Financeiro'],
   ['clinic', 'Clínica e equipe'],
 ];
 
@@ -201,19 +211,24 @@ export function App({ auth = defaultAuth }: { auth?: AuthGateway | null }) {
             )}
           </div>
           <nav className="workspace-nav" aria-label="Áreas da clínica">
-            {navItems.map(([key, label]) => (
-              <button
-                key={key}
-                className="nav-item"
-                aria-current={view === key ? 'page' : undefined}
-                onClick={() => {
-                  setView(key);
-                  setRecordTarget(null);
-                }}
-              >
-                {key === 'clinic' && user.role !== 'admin' ? 'Meu acesso' : label}
-              </button>
-            ))}
+            {navItems
+              .filter(
+                ([key]) =>
+                  key !== 'financial' || user.role === 'admin' || user.role === 'reception',
+              )
+              .map(([key, label]) => (
+                <button
+                  key={key}
+                  className="nav-item"
+                  aria-current={view === key ? 'page' : undefined}
+                  onClick={() => {
+                    setView(key);
+                    setRecordTarget(null);
+                  }}
+                >
+                  {key === 'clinic' && user.role !== 'admin' ? 'Meu acesso' : label}
+                </button>
+              ))}
           </nav>
           <div className="sidebar-foot">
             {logoutButton}
@@ -250,6 +265,7 @@ export function App({ auth = defaultAuth }: { auth?: AuthGateway | null }) {
             />
           )}
           {shown === 'inventory' && <Inventory token={session.access_token} user={user} />}
+          {shown === 'financial' && <Financial token={session.access_token} user={user} />}
           {shown === 'clinic' &&
             (user.role === 'admin' ? (
               <>
