@@ -17,6 +17,13 @@ type Superseding = RecordEntry | WeightRecord | VaccineRecord | PatientDocument
 
 
 class AppendOnlyRepository[ModelT: Superseding](TenantRepository[ModelT]):
+    def all_for_patient(self, patient_id: UUID) -> Sequence[ModelT]:
+        return self.session.scalars(
+            self._select()
+            .where(self.model.patient_id == patient_id)
+            .order_by(self.model.created_at, self.model.id)
+        ).all()
+
     def current_for_patient(self, patient_id: UUID) -> Sequence[ModelT]:
         """Versões vigentes: as que nenhum outro registro substituiu."""
         newer = aliased(self.model)

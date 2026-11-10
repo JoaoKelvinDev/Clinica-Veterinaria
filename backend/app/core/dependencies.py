@@ -29,6 +29,22 @@ def authenticated_context(
     request: Request,
     credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer)],
 ) -> Iterator[AuthenticatedContext]:
+    yield from _authenticated_context(request, credentials, consistent=False)
+
+
+def consistent_authenticated_context(
+    request: Request,
+    credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer)],
+) -> Iterator[AuthenticatedContext]:
+    yield from _authenticated_context(request, credentials, consistent=True)
+
+
+def _authenticated_context(
+    request: Request,
+    credentials: HTTPAuthorizationCredentials | None,
+    *,
+    consistent: bool,
+) -> Iterator[AuthenticatedContext]:
     if credentials is None or credentials.scheme.lower() != "bearer":
         raise AuthenticationRequired("Entre para acessar o sistema.")
     provider = cast(AuthProvider, request.app.state.auth_provider)
@@ -38,6 +54,9 @@ def authenticated_context(
         raise ServiceUnavailable("O banco de dados ainda não está configurado.")
     try:
         with database.sessions.begin() as session:
+            if consistent:
+                # Antes da primeira consulta: cadastros e versões compartilham um snapshot.
+                session.connection(execution_options={"isolation_level": "REPEATABLE READ"})
             verify_runtime_role(session)
             set_context(session, "vetsys.auth_id", str(auth_id))
             actor = IdentityRepository(session).get_by_auth_id(auth_id)
@@ -54,3 +73,6 @@ def authenticated_context(
 
 
 AuthContext = Annotated[AuthenticatedContext, Depends(authenticated_context, scope="function")]
+ConsistentAuthContext = Annotated[
+    AuthenticatedContext, Depends(consistent_authenticated_context, scope="function")
+]

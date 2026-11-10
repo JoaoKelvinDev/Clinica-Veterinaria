@@ -95,6 +95,10 @@ class PatientService:
 
     def list_tutors(self, patient_id: UUID) -> list[TutorLinkRead]:
         self.get(patient_id)
+        return self.record_tutors(patient_id)
+
+    def record_tutors(self, patient_id: UUID) -> list[TutorLinkRead]:
+        self.get(patient_id, include_archived=True)
         return [
             TutorLinkRead(
                 id=link.id,

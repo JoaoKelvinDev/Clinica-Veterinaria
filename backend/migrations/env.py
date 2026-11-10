@@ -10,6 +10,7 @@ from app.modules.inventory import models as inventory_models  # noqa: F401
 from app.modules.messaging import models as messaging_models  # noqa: F401
 from app.modules.patients import models as patient_models  # noqa: F401
 from app.modules.quotes import models as quote_models  # noqa: F401
+from app.modules.records import export_models  # noqa: F401
 from app.modules.records import models as record_models  # noqa: F401
 from app.modules.scheduling import models as scheduling_models  # noqa: F401
 from app.modules.tutors import models as tutor_models  # noqa: F401

@@ -177,6 +177,30 @@ class RecordService:
             for item in self.entries.versions(entry.root_id)
         ]
 
+    def export_record(self, actor: User, patient_id: UUID) -> PatientRecord:
+        require_clinician(actor)
+        result = self.record(actor, patient_id)
+        return result.model_copy(
+            update={
+                "entries": [
+                    RecordEntryRead.model_validate(item, from_attributes=True)
+                    for item in self.entries.all_for_patient(patient_id)
+                ],
+                "weights": [
+                    WeightRead.model_validate(item, from_attributes=True)
+                    for item in self.weights.all_for_patient(patient_id)
+                ],
+                "vaccines": [
+                    VaccineRead.model_validate(item, from_attributes=True)
+                    for item in self.vaccines.all_for_patient(patient_id)
+                ],
+                "documents": [
+                    DocumentRead.model_validate(item, from_attributes=True)
+                    for item in self.documents.all_for_patient(patient_id)
+                ],
+            }
+        )
+
     def _previous[ModelT: Superseding](
         self,
         repository: AppendOnlyRepository[ModelT],
