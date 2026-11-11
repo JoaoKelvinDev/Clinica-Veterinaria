@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { App } from './App';
 import type { AuthGateway, AuthSession } from './auth';
 import { parseUser } from './api';
+import { dashboardFixture } from './test/dashboard-fixture';
 
 const admin = {
   id: 'user-a',
@@ -29,6 +30,8 @@ function mockApi(user = admin) {
   const fetchMock = vi.fn(async (input: string, init?: RequestInit) => {
     if (input === '/api/health') return new Response(JSON.stringify({ status: 'ok' }));
     if (input === '/api/me') return new Response(JSON.stringify({ user, clinic }));
+    if (input === '/api/dashboard')
+      return new Response(JSON.stringify(dashboardFixture(user.role as 'admin' | 'reception')));
     if (input === '/api/users') return new Response(JSON.stringify([admin, reception]));
     if (input === '/api/users/user-r' && init?.method === 'PATCH') {
       return new Response(JSON.stringify({ ...reception, active: false }));
@@ -65,9 +68,7 @@ describe('Autenticação e permissões', () => {
     render(<App auth={auth} />);
     await enter();
     expect(await screen.findByRole('heading', { name: clinic.name })).toBeInTheDocument();
-    expect(
-      await screen.findByRole('heading', { name: 'Agenda e atendimentos' }),
-    ).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Visão geral' })).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Clínica e equipe' }));
     expect(await screen.findByRole('heading', { name: 'Equipe da clínica' })).toBeInTheDocument();
     expect(auth.signIn).toHaveBeenCalledWith('ficticio@example.test', 'fictitious-password');

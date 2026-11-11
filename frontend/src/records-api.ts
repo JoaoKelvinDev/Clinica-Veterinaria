@@ -1,3 +1,5 @@
+import { maxDocumentMegabytes } from './environment';
+
 export interface RecordEntry {
   id: string;
   patient_id: string;
@@ -192,7 +194,7 @@ export const documentKinds = {
 } as const;
 export type DocumentKind = keyof typeof documentKinds;
 export const documentTypes = ['application/pdf', 'image/jpeg', 'image/png'];
-export const maxDocumentBytes = 10 * 1024 * 1024;
+export const maxDocumentBytes = maxDocumentMegabytes * 1024 * 1024;
 
 export interface PatientDocument {
   id: string;

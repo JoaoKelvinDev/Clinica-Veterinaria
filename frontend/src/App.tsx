@@ -13,12 +13,15 @@ import { Messaging } from './Messaging';
 import { Quotes } from './Quotes';
 import { Inventory } from './Inventory';
 import { Financial } from './Financial';
+import { Dashboard } from './Dashboard';
+import { environmentLabel, isDemonstration } from './environment';
 import { ActionScreen, ScreenArea, ScreenFeedback } from './Screen';
 import { focusArea } from './screen-focus';
 import { Records } from './Records';
 import type { RecordTarget } from './Records';
 
 type View =
+  | 'dashboard'
   | 'clinic'
   | 'tutors'
   | 'patients'
@@ -28,6 +31,7 @@ type View =
   | 'inventory'
   | 'financial';
 const navItems: [View, string][] = [
+  ['dashboard', 'Visão geral'],
   ['scheduling', 'Agenda'],
   ['tutors', 'Tutores'],
   ['patients', 'Animais'],
@@ -38,6 +42,7 @@ const navItems: [View, string][] = [
   ['clinic', 'Clínica e equipe'],
 ];
 const navPaths: Record<View, string> = {
+  dashboard: 'M3 3h7v7H3z M14 3h7v7h-7z M3 14h7v7H3z M14 14h7v7h-7z',
   scheduling: 'M5 5h14v15H5z M8 2v6 M16 2v6 M5 11h14',
   tutors:
     'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2 M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8 M17 4a4 4 0 0 1 0 7 M22 21v-2a4 4 0 0 0-3-4',
@@ -57,8 +62,7 @@ export function App({ auth = defaultAuth }: { auth?: AuthGateway | null }) {
   const [error, setError] = useState('');
   const [clinicNotice, setClinicNotice] = useState('');
   const [editingClinic, setEditingClinic] = useState(false);
-  // A agenda é a rotina diária de todos os papéis; por isso é a tela inicial.
-  const [view, setView] = useState<View>('scheduling');
+  const [view, setView] = useState<View>('dashboard');
   const [recordTarget, setRecordTarget] = useState<RecordTarget | null>(null);
   const revision = useRef(0);
   const invalidateRequests = useCallback(() => {
@@ -151,7 +155,7 @@ export function App({ auth = defaultAuth }: { auth?: AuthGateway | null }) {
     setError('');
     try {
       await auth.signOut();
-      setView('scheduling');
+      setView('dashboard');
       setRecordTarget(null);
       await applySession(null);
     } catch (reason) {
@@ -259,14 +263,30 @@ export function App({ auth = defaultAuth }: { auth?: AuthGateway | null }) {
           </nav>
           <div className="sidebar-foot">
             {logoutButton}
-            <span className="environment">Desenvolvimento local</span>
+            <span className="environment">{environmentLabel}</span>
             <HealthStatus />
           </div>
         </aside>
         <main className="workspace">
+          {isDemonstration && (
+            <p className="demo-banner" role="note">
+              Ambiente de demonstração. Use somente dados fictícios. Os serviços de IA e WhatsApp
+              são simulados.
+            </p>
+          )}
           <ScreenArea>
             <div className="area-view" key={view} ref={focusArea}>
               {errorMessage}
+              {view === 'dashboard' && (
+                <Dashboard
+                  token={session.access_token}
+                  user={user}
+                  onNavigate={(destination) => {
+                    setView(destination);
+                    setRecordTarget(null);
+                  }}
+                />
+              )}
               {recordTarget && (
                 <Records
                   token={session.access_token}

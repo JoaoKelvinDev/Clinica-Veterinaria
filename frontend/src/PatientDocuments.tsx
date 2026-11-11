@@ -3,6 +3,7 @@ import { ActionScreen, ScreenArea, ScreenFeedback } from './Screen';
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { apiRequest } from './api';
+import { maxDocumentMegabytes } from './environment';
 import type { UserProfile } from './api';
 import { errorMessage } from './registry-api';
 import { displayDateTime } from './scheduling-api';
@@ -57,7 +58,7 @@ function PatientDocumentsContent({
     const hasFile = file instanceof File && file.size > 0;
     if (!hasFile) data.delete('file');
     if (hasFile && file.size > maxDocumentBytes) {
-      setError('O arquivo passa de 10 MB.');
+      setError(`O arquivo passa de ${maxDocumentMegabytes} MB.`);
       return;
     }
     const summary = String(data.get('summary') ?? '').trim();
@@ -153,7 +154,8 @@ function PatientDocumentsContent({
             }}
           >
             <p className="muted">
-              Anexe o arquivo, escreva um resumo ou faça os dois. PDF, JPG ou PNG de até 10 MB.
+              Anexe o arquivo, escreva um resumo ou faça os dois. PDF, JPG ou PNG de até{' '}
+              {maxDocumentMegabytes} MB.
             </p>
             <label>
               Tipo
