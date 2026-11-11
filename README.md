@@ -56,6 +56,8 @@ O modo `VERCEL=1` configura a API serverless; `VITE_DEMO_MODE=true` identifica a
 
 Estado, verificações, limites e próximos passos em [Etapa 13 — Demonstração](docs/etapa-13-demonstracao-status.md). Credenciais continuam exclusivamente em arquivos ignorados pelo Git.
 
+A nova tela de entrada baseada no projeto Lovable `pawprint-clinic-welcome` foi implementada localmente, com foto e fontes locais e autenticação existente. A mudança abrange somente a entrada; dashboard e módulos internos mantêm o visual anterior. Essa versão ainda aguarda revisão visual e autorização para publicação. Veja [verificação da tela de entrada](docs/login-visual-verificacao.md) e [ADR 0017](docs/decisions/0017-tela-de-entrada-lovable.md).
+
 ## Primeiro administrador e novos usuários
 
 O cadastro público está bloqueado. Provisionar contas é uma ação explícita e local. Em `backend/`:
