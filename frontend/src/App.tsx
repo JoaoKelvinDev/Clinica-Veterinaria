@@ -14,6 +14,7 @@ import { Quotes } from './Quotes';
 import { Inventory } from './Inventory';
 import { Financial } from './Financial';
 import { Dashboard } from './Dashboard';
+import { LoginScreen } from './LoginScreen';
 import { environmentLabel, isDemonstration } from './environment';
 import { ActionScreen, ScreenArea, ScreenFeedback } from './Screen';
 import { focusArea } from './screen-focus';
@@ -408,66 +409,16 @@ export function App({ auth = defaultAuth }: { auth?: AuthGateway | null }) {
   }
 
   return (
-    <div className="page">
-      <header className="header">
-        {brand}
-        <div className="header-actions">
-          <span className="environment">Desenvolvimento local</span>
-          {logoutButton}
-        </div>
-      </header>
-      <main className="entry">
-        {errorMessage}
-        {loading ? (
-          <section className="panel">
-            <h1>Preparando seu acesso</h1>
-            <p role="status">Carregando sua clínica…</p>
-          </section>
-        ) : !session ? (
-          <section className="panel login-panel">
-            <h1>Entre na sua clínica</h1>
-            <p className="intro">Agenda, tutores e pacientes da sua equipe em um só lugar.</p>
-            {!auth && <p role="alert">O acesso ainda não está configurado neste ambiente.</p>}
-            <form
-              onSubmit={(event) => {
-                void login(event);
-              }}
-            >
-              <label>
-                E-mail
-                <input
-                  name="email"
-                  type="email"
-                  autoComplete="username"
-                  required
-                  disabled={!auth || busy}
-                />
-              </label>
-              <label>
-                Senha
-                <input
-                  name="password"
-                  type="password"
-                  autoComplete="current-password"
-                  required
-                  disabled={!auth || busy}
-                />
-              </label>
-              <button disabled={!auth || busy}>{busy ? 'Entrando…' : 'Entrar'}</button>
-            </form>
-            <p className="muted">Acesso exclusivo à equipe da clínica.</p>
-          </section>
-        ) : (
-          <section className="panel">
-            <h1>Acesso indisponível</h1>
-            <p>Consulte o administrador da sua clínica para verificar seu cadastro.</p>
-          </section>
-        )}
-      </main>
-      <footer>
-        <span>Feito para clínicas veterinárias no Brasil.</span>
-        <HealthStatus />
-      </footer>
-    </div>
+    <LoginScreen
+      configured={Boolean(auth)}
+      loading={loading}
+      busy={busy}
+      hasSession={Boolean(session)}
+      error={error}
+      sessionAction={logoutButton}
+      onSubmit={(event) => {
+        void login(event);
+      }}
+    />
   );
 }
