@@ -69,10 +69,14 @@ class FinancialRepository(TenantRepository[FinancialEntry]):
             .limit(limit)
             .offset(offset)
         ).all()
+        income, expense = self.totals(filters)
+        return rows, total, income, expense
+
+    def totals(self, filters: EntryFilters) -> tuple[int, int]:
         # Totais efetivos usam todos os resultados filtrados, nunca só a página atual.
         active = self._filtered(filters.model_copy(update={"status": "posted"})).subquery()
         if filters.status == "reversed":
-            return rows, total, 0, 0
+            return 0, 0
         income, expense = self.session.execute(
             select(
                 func.coalesce(
@@ -83,4 +87,4 @@ class FinancialRepository(TenantRepository[FinancialEntry]):
                 ),
             )
         ).one()
-        return rows, total, int(cast(Decimal, income)), int(cast(Decimal, expense))
+        return int(cast(Decimal, income)), int(cast(Decimal, expense))

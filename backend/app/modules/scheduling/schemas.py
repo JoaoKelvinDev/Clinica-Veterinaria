@@ -79,3 +79,14 @@ class EncounterPage(BaseModel):
     items: list[EncounterRead]
     total: int
     timezone: str = "America/Fortaleza"
+
+
+class ScheduleSummary(BaseModel):
+    appointments_total: int = Field(ge=0)
+    scheduled: int = Field(ge=0)
+    confirmed: int = Field(ge=0)
+    in_progress: int = Field(ge=0)
+    completed: int = Field(ge=0)
+    cancelled: int = Field(ge=0)
+    no_show: int = Field(ge=0)
+    open_encounters: int = Field(ge=0)

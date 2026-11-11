@@ -22,6 +22,7 @@ from app.modules.scheduling.schemas import (
     AppointmentUpdate,
     EncounterPage,
     EncounterRead,
+    ScheduleSummary,
 )
 
 TIMEZONE = ZoneInfo("America/Fortaleza")
@@ -47,6 +48,14 @@ def require_veterinarian(actor: User, veterinarian_id: UUID) -> None:
 
 
 class SchedulingService:
+    def summary(self, day: date) -> ScheduleSummary:
+        counts = self.appointments.status_counts(*day_bounds(day))
+        return ScheduleSummary(
+            appointments_total=sum(counts.values()),
+            **{status.value: counts.get(status.value, 0) for status in AppointmentStatus},
+            open_encounters=self.encounters.open_count(),
+        )
+
     @classmethod
     def for_clinic(cls, session: Session, context: ClinicContext) -> "SchedulingService":
         return cls(

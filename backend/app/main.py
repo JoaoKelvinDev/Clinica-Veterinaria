@@ -13,6 +13,7 @@ from app.core.errors import DomainError
 from app.modules.ai_scribe.api import router as scribe_router
 from app.modules.billing.api import router as billing_router
 from app.modules.clinics.api import router
+from app.modules.dashboard.api import router as dashboard_router
 from app.modules.inventory.api import router as inventory_router
 from app.modules.messaging.api import router as messaging_router
 from app.modules.patients.api import router as patients_router
@@ -43,9 +44,9 @@ def create_app(
     stt_provider: SpeechToTextProvider | None = None,
 ) -> FastAPI:
     config = settings or Settings.from_environment()
-    application = FastAPI(title="Sistema Veterinário", version="0.12.0")
+    application = FastAPI(title="Sistema Veterinário", version="0.13.0")
     application.state.database = database or (
-        Database(config.database_url) if config.database_url else None
+        Database(config.database_url, serverless=config.serverless) if config.database_url else None
     )
     application.state.auth_provider = auth_provider or SupabaseAuthProvider(
         config.supabase_url, config.supabase_key
@@ -101,6 +102,7 @@ def create_app(
     application.include_router(quotes_router)
     application.include_router(inventory_router)
     application.include_router(billing_router)
+    application.include_router(dashboard_router)
     return application
 
 

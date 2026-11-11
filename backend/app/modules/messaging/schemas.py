@@ -42,6 +42,11 @@ class MessagingOverview(BaseModel):
     timezone: str = "America/Fortaleza"
 
 
+class MessagingSummary(BaseModel):
+    needs_attention: int = Field(ge=0)
+    simulated: bool
+
+
 class InboundInput(BaseModel):
     """Resposta simulada do tutor; o identificador opcional permite testar duplicatas."""
 

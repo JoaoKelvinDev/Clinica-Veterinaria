@@ -22,6 +22,7 @@ from app.modules.messaging.schemas import (
     DispatchResult,
     MessageRead,
     MessagingOverview,
+    MessagingSummary,
     ReminderRead,
 )
 from app.modules.scheduling.models import AppointmentStatus
@@ -90,6 +91,14 @@ def reminder_text(kind: str, tutor: str, patient: str, clinic: str, event: datet
 
 
 class MessagingService:
+    def summary(self, actor: User) -> MessagingSummary:
+        if not actor.active or actor.deleted_at is not None:
+            raise AccessDenied("Usuário sem acesso ativo.")
+        return MessagingSummary(
+            needs_attention=self.messages.attention_count(),
+            simulated=self.provider.name == "mock",
+        )
+
     @classmethod
     def for_clinic(
         cls, session: Session, context: ClinicContext, provider: MessagingProvider

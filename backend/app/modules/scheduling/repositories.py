@@ -18,6 +18,13 @@ class AppointmentRepository(TenantRepository[Appointment]):
             self._select().where(Appointment.id == entity_id).with_for_update()
         )
 
+    def status_counts(self, start: datetime, end: datetime) -> dict[str, int]:
+        query = self._select().where(Appointment.starts_at < end, Appointment.ends_at > start)
+        rows = self.session.execute(
+            query.with_only_columns(Appointment.status, func.count()).group_by(Appointment.status)
+        ).all()
+        return {status: count for status, count in rows}
+
     def page(
         self, start: datetime, end: datetime, veterinarian_id: UUID | None, limit: int, offset: int
     ) -> tuple[Sequence[Appointment], int]:
@@ -50,6 +57,16 @@ class AppointmentRepository(TenantRepository[Appointment]):
 class EncounterRepository(TenantRepository[Encounter]):
     def __init__(self, session: Session, context: ClinicContext) -> None:
         super().__init__(session, context, Encounter)
+
+    def open_count(self) -> int:
+        return (
+            self.session.scalar(
+                self._select()
+                .where(Encounter.completed_at.is_(None))
+                .with_only_columns(func.count())
+            )
+            or 0
+        )
 
     def locked(self, entity_id: UUID) -> Encounter | None:
         return self.session.scalar(

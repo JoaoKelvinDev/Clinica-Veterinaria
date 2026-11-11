@@ -14,6 +14,7 @@ from app.modules.inventory.models import Lot, Product, StockMovement
 from app.modules.inventory.repositories import LotRepository, MovementRepository, ProductRepository
 from app.modules.inventory.schemas import (
     Adjustment,
+    InventoryAlerts,
     Issue,
     LotCreate,
     LotRead,
@@ -58,6 +59,10 @@ def allocate_fefo(
 
 
 class InventoryService:
+    def alerts(self, day: date) -> InventoryAlerts:
+        low, expired, expiring = self.products.alert_counts(day, day + timedelta(days=30))
+        return InventoryAlerts(low_stock_products=low, expired_lots=expired, expiring_lots=expiring)
+
     @classmethod
     def for_clinic(cls, session: Session, context: ClinicContext) -> InventoryService:
         return cls(

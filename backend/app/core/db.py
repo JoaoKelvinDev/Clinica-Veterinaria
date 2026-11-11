@@ -24,8 +24,20 @@ class TenantModel(Base):
 
 
 class Database:
-    def __init__(self, url: str) -> None:
-        self.engine = create_engine(url, pool_pre_ping=True, hide_parameters=True)
+    def __init__(self, url: str, *, serverless: bool = False) -> None:
+        if serverless:
+            # Cada instância deve limitar conexões ao pooler; prepared statements não
+            # sobrevivem à troca de conexão do Supavisor em modo transação.
+            self.engine = create_engine(
+                url,
+                pool_pre_ping=True,
+                hide_parameters=True,
+                pool_size=1,
+                max_overflow=0,
+                connect_args={"sslmode": "require", "prepare_threshold": None},
+            )
+        else:
+            self.engine = create_engine(url, pool_pre_ping=True, hide_parameters=True)
         self.sessions = sessionmaker(self.engine, expire_on_commit=False)
 
 

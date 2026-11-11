@@ -2,6 +2,7 @@ from collections.abc import Sequence
 from datetime import datetime
 from uuid import UUID
 
+from sqlalchemy import func
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
@@ -52,6 +53,16 @@ class ReminderRepository(TenantRepository[ReminderJob]):
 class MessageRepository(TenantRepository[Message]):
     def __init__(self, session: Session, context: ClinicContext) -> None:
         super().__init__(session, context, Message)
+
+    def attention_count(self) -> int:
+        return (
+            self.session.scalar(
+                self._select()
+                .where(Message.needs_attention.is_(True), Message.handled_at.is_(None))
+                .with_only_columns(func.count())
+            )
+            or 0
+        )
 
     def by_provider_id(self, provider: str, provider_message_id: str) -> Message | None:
         return self.session.scalar(

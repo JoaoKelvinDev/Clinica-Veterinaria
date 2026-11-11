@@ -133,3 +133,9 @@ class ProductPage(BaseModel):
 class MovementPage(BaseModel):
     items: list[MovementRead]
     total: int
+
+
+class InventoryAlerts(BaseModel):
+    low_stock_products: int = Field(ge=0)
+    expired_lots: int = Field(ge=0)
+    expiring_lots: int = Field(ge=0)

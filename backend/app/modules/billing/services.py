@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 from uuid import UUID, uuid4
 from zoneinfo import ZoneInfo
 
@@ -29,6 +29,21 @@ def require_financial_access(actor: User, *, admin: bool = False) -> None:
 
 
 class FinancialService:
+    def summary(self, actor: User, start: date, end: date) -> FinancialSummary:
+        require_financial_access(actor)
+        if start > end:
+            raise InvalidData("O início do período deve ser anterior ou igual ao fim.")
+        income, expense = self.repository.totals(
+            EntryFilters(
+                start=start, end=end, kind="income" if actor.role == Role.RECEPTION else None
+            )
+        )
+        return FinancialSummary(
+            income_cents=str(income),
+            expense_cents=str(expense) if actor.role == Role.ADMIN else None,
+            difference_cents=str(income - expense) if actor.role == Role.ADMIN else None,
+        )
+
     @classmethod
     def for_clinic(cls, session: Session, context: ClinicContext) -> "FinancialService":
         return cls(
