@@ -1,3 +1,5 @@
+import type { ComponentProps } from 'react';
+import { ActionScreen, ScreenArea, ScreenFeedback } from './Screen';
 import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { apiRequest } from './api';
@@ -97,7 +99,7 @@ function PartySearch({
   );
 }
 
-export function Financial({ token, user }: { token: string; user: UserProfile }) {
+function FinancialContent({ token, user }: { token: string; user: UserProfile }) {
   if (!user.active || !['admin', 'reception'].includes(user.role)) return null;
   return (
     <FinancialWorkspace key={`${token}:${user.role}`} token={token} admin={user.role === 'admin'} />
@@ -123,6 +125,7 @@ function FinancialWorkspace({ token, admin }: { token: string; admin: boolean })
   const [tutor, setTutor] = useState<Option | null>(null);
   const [patient, setPatient] = useState<Option | null>(null);
   const [reversing, setReversing] = useState<FinancialEntry | null>(null);
+  const [creating, setCreating] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -195,6 +198,7 @@ function FinancialWorkspace({ token, admin }: { token: string; admin: boolean })
         `${saved.kind === 'income' ? 'Recebimento registrado' : 'Despesa registrada'}. Consulte o período correspondente na lista.`,
       );
       form.reset();
+      setCreating(false);
       setTutor(null);
       setPatient(null);
       refresh();
@@ -237,6 +241,18 @@ function FinancialWorkspace({ token, admin }: { token: string; admin: boolean })
         </div>
         <button type="button" className="secondary" disabled={loading || busy} onClick={refresh}>
           Atualizar lançamentos
+        </button>
+        <button
+          type="button"
+          disabled={busy}
+          onClick={() => {
+            setCreating(true);
+            setReversing(null);
+            setFormError('');
+            setNotice('');
+          }}
+        >
+          {admin ? 'Novo lançamento' : 'Novo recebimento'}
         </button>
       </div>
       <p className="muted">
@@ -303,11 +319,7 @@ function FinancialWorkspace({ token, admin }: { token: string; admin: boolean })
         )}
         <button disabled={busy}>Aplicar filtros</button>
       </form>
-      {listError && (
-        <p className="form-error" role="alert">
-          {listError}
-        </p>
-      )}
+      <ScreenFeedback error={listError} />
       {loading && <p role="status">Carregando lançamentos…</p>}
       {!loading && page && (
         <>
@@ -433,110 +445,131 @@ function FinancialWorkspace({ token, admin }: { token: string; admin: boolean })
           </div>
         </>
       )}
-      {notice && (
-        <p className="success-message" role="status">
-          {notice}
-        </p>
-      )}
-      {formError && (
-        <p className="form-error" role="alert">
-          {formError}
-        </p>
-      )}
+      <ScreenFeedback notice={notice} />
+      <ScreenFeedback error={formError} />
       {reversing && admin ? (
-        <form
-          className="registry-form"
-          onSubmit={(event) => {
-            void reverse(event);
+        <ActionScreen
+          title={<>Estornar {reversing.description}</>}
+          onBack={() => {
+            setReversing(null);
+            setFormError('');
           }}
-          aria-label="Estornar lançamento"
+          busy={busy}
+          error={formError}
+          notice={notice}
         >
-          <h3>Estornar {reversing.description}</h3>
-          <p>
-            {financialMoney(reversing.amount_cents)} ·{' '}
-            {reversing.occurred_on.split('-').reverse().join('/')}
-          </p>
-          <p>
-            O original será preservado e deixará de compor os totais na sua data financeira. Este
-            estorno é administrativo; uma devolução real deve ser registrada como despesa.
-          </p>
-          <label>
-            Motivo do estorno
-            <textarea name="reason" minLength={3} maxLength={500} required disabled={busy} />
-          </label>
-          <div className="actions">
-            <button disabled={busy}>Confirmar estorno</button>
-            <button
-              className="secondary"
-              type="button"
-              disabled={busy}
-              onClick={() => {
-                setReversing(null);
-                setFormError('');
-              }}
-            >
-              Cancelar
-            </button>
-          </div>
-        </form>
-      ) : (
-        <form
-          className="registry-form"
-          onSubmit={(event) => {
-            void create(event);
-          }}
-          aria-label="Novo lançamento"
-        >
-          <h3>{admin ? 'Novo lançamento' : 'Novo recebimento'}</h3>
-          <fieldset disabled={busy}>
-            {admin && (
-              <label>
-                Tipo
-                <select name="kind">
-                  <option value="income">Recebimento</option>
-                  <option value="expense">Despesa</option>
-                </select>
-              </label>
-            )}
-            <label>
-              Descrição
-              <input name="description" maxLength={300} required />
-            </label>
-            <div className="field-pair">
-              <label>
-                Categoria
-                <input name="category" maxLength={80} required />
-              </label>
-              <label>
-                Valor em reais
-                <input name="amount" inputMode="decimal" placeholder="123,45" required />
-              </label>
-            </div>
-            <div className="field-pair">
-              <label>
-                Data do recebimento ou pagamento
-                <input name="occurred_on" type="date" defaultValue={today} max={today} required />
-              </label>
-              <label>
-                Forma de pagamento
-                <select name="payment_method">
-                  {Object.entries(paymentMethods).map(([key, label]) => (
-                    <option key={key} value={key}>
-                      {label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </div>
-            <PartySearch token={token} kind="tutors" selected={tutor} onSelect={setTutor} />
-            <PartySearch token={token} kind="patients" selected={patient} onSelect={setPatient} />
-            <p className="muted">
-              Se informar ambos, o tutor deve estar vinculado ao animal no cadastro.
+          <form
+            className="registry-form"
+            onSubmit={(event) => {
+              void reverse(event);
+            }}
+            aria-label="Estornar lançamento"
+          >
+            <p>
+              {financialMoney(reversing.amount_cents)} ·{' '}
+              {reversing.occurred_on.split('-').reverse().join('/')}
             </p>
-            <button disabled={busy}>{busy ? 'Registrando…' : 'Registrar lançamento'}</button>
-          </fieldset>
-        </form>
-      )}
+            <p>
+              O original será preservado e deixará de compor os totais na sua data financeira. Este
+              estorno é administrativo; uma devolução real deve ser registrada como despesa.
+            </p>
+            <label>
+              Motivo do estorno
+              <textarea name="reason" minLength={3} maxLength={500} required disabled={busy} />
+            </label>
+            <div className="actions">
+              <button disabled={busy}>Confirmar estorno</button>
+              <button
+                className="secondary"
+                type="button"
+                disabled={busy}
+                onClick={() => {
+                  setReversing(null);
+                  setFormError('');
+                }}
+              >
+                Cancelar
+              </button>
+            </div>
+          </form>
+        </ActionScreen>
+      ) : creating ? (
+        <ActionScreen
+          title={<>{admin ? 'Novo lançamento' : 'Novo recebimento'}</>}
+          onBack={() => {
+            setCreating(false);
+            setFormError('');
+          }}
+          busy={busy}
+          error={formError}
+          notice={notice}
+        >
+          <form
+            className="registry-form"
+            onSubmit={(event) => {
+              void create(event);
+            }}
+            aria-label="Novo lançamento"
+          >
+            <fieldset disabled={busy}>
+              {admin && (
+                <label>
+                  Tipo
+                  <select name="kind">
+                    <option value="income">Recebimento</option>
+                    <option value="expense">Despesa</option>
+                  </select>
+                </label>
+              )}
+              <label>
+                Descrição
+                <input name="description" maxLength={300} required />
+              </label>
+              <div className="field-pair">
+                <label>
+                  Categoria
+                  <input name="category" maxLength={80} required />
+                </label>
+                <label>
+                  Valor em reais
+                  <input name="amount" inputMode="decimal" placeholder="123,45" required />
+                </label>
+              </div>
+              <div className="field-pair">
+                <label>
+                  Data do recebimento ou pagamento
+                  <input name="occurred_on" type="date" defaultValue={today} max={today} required />
+                </label>
+                <label>
+                  Forma de pagamento
+                  <select name="payment_method">
+                    {Object.entries(paymentMethods).map(([key, label]) => (
+                      <option key={key} value={key}>
+                        {label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+              <PartySearch token={token} kind="tutors" selected={tutor} onSelect={setTutor} />
+              <PartySearch token={token} kind="patients" selected={patient} onSelect={setPatient} />
+              <p className="muted">
+                Se informar ambos, o tutor deve estar vinculado ao animal no cadastro.
+              </p>
+              <button disabled={busy}>{busy ? 'Registrando…' : 'Registrar lançamento'}</button>
+            </fieldset>
+          </form>
+        </ActionScreen>
+      ) : null}
     </section>
+  );
+}
+
+export function Financial(props: ComponentProps<typeof FinancialContent>) {
+  if (!props.user.active || !['admin', 'reception'].includes(props.user.role)) return null;
+  return (
+    <ScreenArea>
+      <FinancialContent {...props} />
+    </ScreenArea>
   );
 }

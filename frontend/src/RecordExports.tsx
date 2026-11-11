@@ -1,3 +1,5 @@
+import type { ComponentProps } from 'react';
+import { ActionScreen, ScreenArea, ScreenFeedback } from './Screen';
 import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { apiRequest } from './api';
@@ -11,9 +13,8 @@ import {
   parseExportPage,
 } from './record-exports-api';
 import type { RecordExport } from './record-exports-api';
-import { reveal } from './reveal';
 
-export function RecordExports({
+function RecordExportsContent({
   token,
   user,
   patientId,
@@ -30,7 +31,11 @@ export function RecordExports({
       <button className="secondary" onClick={() => setOpened(!opened)}>
         {opened ? 'Fechar exportações' : 'Ver exportações em PDF'}
       </button>
-      {opened && <ExportPanel token={token} user={user} patientId={patientId} />}
+      {opened && (
+        <ActionScreen title="Exportações em PDF" onBack={() => setOpened(false)}>
+          <ExportPanel token={token} user={user} patientId={patientId} />
+        </ActionScreen>
+      )}
     </section>
   );
 }
@@ -160,21 +165,13 @@ function ExportPanel({
     </div>
   );
   return (
-    <div className="export-panel" ref={reveal}>
+    <div className="export-panel">
       <p className="confirmation">
         Os PDFs são gerados sem assinatura digital incorporada. Conferir o solicitante, assinar e
         obter comprovante de recebimento continuam sendo procedimentos manuais da clínica.
       </p>
-      {error && (
-        <p role="alert" className="form-error">
-          {error}
-        </p>
-      )}
-      {notice && (
-        <p role="status" className="success-message">
-          {notice}
-        </p>
-      )}
+      <ScreenFeedback error={error} />
+      <ScreenFeedback notice={notice} />
       <div className="actions">
         {user.role === 'veterinarian' && (
           <button
@@ -199,109 +196,127 @@ function ExportPanel({
         </button>
       </div>
       {options && (
-        <form
-          className="registry-form"
-          onSubmit={(event) => {
-            void submit(event);
+        <ActionScreen
+          title={<>Preparar cópia do prontuário</>}
+          onBack={() => {
+            setOptions(null);
           }}
-          ref={reveal}
+          busy={busy}
+          error={error}
+          notice={notice}
         >
-          <h4>Preparar cópia do prontuário</h4>
-          <fieldset disabled={busy}>
-            <p>
-              {options.clinic_name} · {options.patient_name}
-            </p>
-            <label>
-              Responsável identificado na cópia
-              <select required value={tutorId} onChange={(event) => setTutorId(event.target.value)}>
-                <option value="" disabled>
-                  Selecione o responsável
-                </option>
-                {options.tutors.map(({ tutor }) => (
-                  <option key={tutor.id} value={tutor.id}>
-                    {tutor.name}
-                    {tutor.deleted_at ? ' (arquivado)' : ''}
+          <form
+            className="registry-form"
+            onSubmit={(event) => {
+              void submit(event);
+            }}
+          >
+            <fieldset disabled={busy}>
+              <p>
+                {options.clinic_name} · {options.patient_name}
+              </p>
+              <label>
+                Responsável identificado na cópia
+                <select
+                  required
+                  value={tutorId}
+                  onChange={(event) => setTutorId(event.target.value)}
+                >
+                  <option value="" disabled>
+                    Selecione o responsável
                   </option>
-                ))}
-              </select>
-            </label>
-            {selectedTutor && (
-              <p className="muted">
-                CPF: {selectedTutor.document || 'Não informado'} · Endereço:{' '}
-                {selectedTutor.address || 'Não informado'}
-              </p>
-            )}
-            {incomplete && (
-              <p className="confirmation">
-                Complete CPF e endereço no cadastro do responsável antes de emitir.
-              </p>
-            )}
-            {options.tutors.length === 0 && (
-              <p className="confirmation">Vincule um responsável ao paciente antes de emitir.</p>
-            )}
-            <p>
-              Preparação por {user.name} · CRMV-{user.crmv_state} {user.crmv}
-            </p>
-            <label>
-              Endereço profissional
-              <textarea name="professional_address" required minLength={3} maxLength={500} />
-            </label>
-            <div className="field-pair">
-              <label>
-                Telefone profissional
-                <input name="professional_phone" type="tel" required minLength={8} maxLength={40} />
+                  {options.tutors.map(({ tutor }) => (
+                    <option key={tutor.id} value={tutor.id}>
+                      {tutor.name}
+                      {tutor.deleted_at ? ' (arquivado)' : ''}
+                    </option>
+                  ))}
+                </select>
               </label>
+              {selectedTutor && (
+                <p className="muted">
+                  CPF: {selectedTutor.document || 'Não informado'} · Endereço:{' '}
+                  {selectedTutor.address || 'Não informado'}
+                </p>
+              )}
+              {incomplete && (
+                <p className="confirmation">
+                  Complete CPF e endereço no cadastro do responsável antes de emitir.
+                </p>
+              )}
+              {options.tutors.length === 0 && (
+                <p className="confirmation">Vincule um responsável ao paciente antes de emitir.</p>
+              )}
+              <p>
+                Preparação por {user.name} · CRMV-{user.crmv_state} {user.crmv}
+              </p>
               <label>
-                E-mail profissional
-                <input name="professional_email" type="email" required maxLength={254} />
+                Endereço profissional
+                <textarea name="professional_address" required minLength={3} maxLength={500} />
               </label>
-            </div>
-            <label className="checkbox">
-              <input
-                type="checkbox"
-                checked={establishment}
-                onChange={(event) => setEstablishment(event.target.checked)}
-              />
-              Identificar estabelecimento (pessoa jurídica)
-            </label>
-            {establishment && (
-              <>
+              <div className="field-pair">
                 <label>
-                  Razão social
-                  <input name="establishment_legal_name" required maxLength={200} />
+                  Telefone profissional
+                  <input
+                    name="professional_phone"
+                    type="tel"
+                    required
+                    minLength={8}
+                    maxLength={40}
+                  />
                 </label>
-                <div className="field-pair">
+                <label>
+                  E-mail profissional
+                  <input name="professional_email" type="email" required maxLength={254} />
+                </label>
+              </div>
+              <label className="checkbox">
+                <input
+                  type="checkbox"
+                  checked={establishment}
+                  onChange={(event) => setEstablishment(event.target.checked)}
+                />
+                Identificar estabelecimento (pessoa jurídica)
+              </label>
+              {establishment && (
+                <>
                   <label>
-                    CNPJ
-                    <input name="establishment_cnpj" required minLength={14} maxLength={18} />
+                    Razão social
+                    <input name="establishment_legal_name" required maxLength={200} />
                   </label>
-                  <label>
-                    Registro do estabelecimento no CRMV
-                    <input name="establishment_crmv" required minLength={3} maxLength={40} />
-                  </label>
-                </div>
-              </>
-            )}
-            <p className="muted">
-              Os dados profissionais informados ficam preservados nesta cópia. O histórico inclui
-              registros vigentes e versões anteriores; rascunhos de IA não aprovados ficam fora.
-              Anexos originais são fornecidos separadamente no ZIP.
-            </p>
-            <label className="checkbox">
-              <input name="acknowledge_unsigned" type="checkbox" required />
-              Conferi os dados e estou ciente de que a cópia precisa de assinatura e entrega
-              manuais.
-            </label>
-            <div className="actions">
-              <button disabled={incomplete || !tutorId}>
-                {busy ? 'Preparando…' : 'Confirmar preparação do PDF'}
-              </button>
-              <button className="secondary" type="button" onClick={() => setOptions(null)}>
-                Cancelar
-              </button>
-            </div>
-          </fieldset>
-        </form>
+                  <div className="field-pair">
+                    <label>
+                      CNPJ
+                      <input name="establishment_cnpj" required minLength={14} maxLength={18} />
+                    </label>
+                    <label>
+                      Registro do estabelecimento no CRMV
+                      <input name="establishment_crmv" required minLength={3} maxLength={40} />
+                    </label>
+                  </div>
+                </>
+              )}
+              <p className="muted">
+                Os dados profissionais informados ficam preservados nesta cópia. O histórico inclui
+                registros vigentes e versões anteriores; rascunhos de IA não aprovados ficam fora.
+                Anexos originais são fornecidos separadamente no ZIP.
+              </p>
+              <label className="checkbox">
+                <input name="acknowledge_unsigned" type="checkbox" required />
+                Conferi os dados e estou ciente de que a cópia precisa de assinatura e entrega
+                manuais.
+              </label>
+              <div className="actions">
+                <button disabled={incomplete || !tutorId}>
+                  {busy ? 'Preparando…' : 'Confirmar preparação do PDF'}
+                </button>
+                <button className="secondary" type="button" onClick={() => setOptions(null)}>
+                  Cancelar
+                </button>
+              </div>
+            </fieldset>
+          </form>
+        </ActionScreen>
       )}
       {justCreated && !page.items.some((item) => item.id === justCreated.id) && (
         <div className="confirmation">
@@ -362,5 +377,13 @@ function ExportPanel({
         </>
       )}
     </div>
+  );
+}
+
+export function RecordExports(props: ComponentProps<typeof RecordExportsContent>) {
+  return (
+    <ScreenArea>
+      <RecordExportsContent {...props} />
+    </ScreenArea>
   );
 }

@@ -13,6 +13,8 @@ import { Messaging } from './Messaging';
 import { Quotes } from './Quotes';
 import { Inventory } from './Inventory';
 import { Financial } from './Financial';
+import { ActionScreen, ScreenArea, ScreenFeedback } from './Screen';
+import { focusArea } from './screen-focus';
 import { Records } from './Records';
 import type { RecordTarget } from './Records';
 
@@ -35,6 +37,17 @@ const navItems: [View, string][] = [
   ['financial', 'Financeiro'],
   ['clinic', 'Clínica e equipe'],
 ];
+const navPaths: Record<View, string> = {
+  scheduling: 'M5 5h14v15H5z M8 2v6 M16 2v6 M5 11h14',
+  tutors:
+    'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2 M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8 M17 4a4 4 0 0 1 0 7 M22 21v-2a4 4 0 0 0-3-4',
+  patients: 'M12 21s-8-5-8-11a4 4 0 0 1 8-2 4 4 0 0 1 8 2c0 6-8 11-8 11z',
+  messaging: 'M4 4h16v12H9l-5 4z M8 8h8 M8 12h5',
+  quotes: 'M6 3h12v18l-3-2-3 2-3-2-3 2z M9 7h6 M9 11h6 M9 15h3',
+  inventory: 'M3 7l9-4 9 4v10l-9 4-9-4z M3 7l9 4 9-4 M12 11v10',
+  financial: 'M4 20h16 M7 16v-5 M12 16V5 M17 16V8',
+  clinic: 'M4 21V5h16v16 M2 21h20 M9 21v-6h6v6 M9 8h6 M12 5v6',
+};
 
 export function App({ auth = defaultAuth }: { auth?: AuthGateway | null }) {
   const [session, setSession] = useState<AuthSession | null>(null);
@@ -43,6 +56,7 @@ export function App({ auth = defaultAuth }: { auth?: AuthGateway | null }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [clinicNotice, setClinicNotice] = useState('');
+  const [editingClinic, setEditingClinic] = useState(false);
   // A agenda é a rotina diária de todos os papéis; por isso é a tela inicial.
   const [view, setView] = useState<View>('scheduling');
   const [recordTarget, setRecordTarget] = useState<RecordTarget | null>(null);
@@ -158,6 +172,7 @@ export function App({ auth = defaultAuth }: { auth?: AuthGateway | null }) {
       await apiRequest(session.access_token, '/clinic', { name });
       await refreshIdentity(session);
       setClinicNotice('Nome da clínica salvo.');
+      setEditingClinic(false);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'Não foi possível salvar.');
     } finally {
@@ -193,7 +208,6 @@ export function App({ auth = defaultAuth }: { auth?: AuthGateway | null }) {
 
   if (!loading && identity && session) {
     const { user, clinic } = identity;
-    const shown = recordTarget ? 'record' : view;
     return (
       <div className="shell">
         <aside className="sidebar">
@@ -224,8 +238,21 @@ export function App({ auth = defaultAuth }: { auth?: AuthGateway | null }) {
                   onClick={() => {
                     setView(key);
                     setRecordTarget(null);
+                    setEditingClinic(false);
                   }}
                 >
+                  <svg
+                    className="nav-icon"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.7"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d={navPaths[key]} />
+                  </svg>
                   {key === 'clinic' && user.role !== 'admin' ? 'Meu acesso' : label}
                 </button>
               ))}
@@ -237,102 +264,124 @@ export function App({ auth = defaultAuth }: { auth?: AuthGateway | null }) {
           </div>
         </aside>
         <main className="workspace">
-          {errorMessage}
-          {recordTarget && (
-            <Records
-              token={session.access_token}
-              user={user}
-              target={recordTarget}
-              onClose={() => setRecordTarget(null)}
-            />
-          )}
-          {shown === 'scheduling' && (
-            <Scheduling token={session.access_token} user={user} onOpenRecord={setRecordTarget} />
-          )}
-          {shown === 'messaging' && <Messaging token={session.access_token} user={user} />}
-          {shown === 'quotes' && <Quotes token={session.access_token} user={user} />}
-          {shown === 'tutors' && (
-            <Tutors
-              token={session.access_token}
-              canWrite={user.role === 'admin' || user.role === 'reception'}
-            />
-          )}
-          {shown === 'patients' && (
-            <Patients
-              token={session.access_token}
-              canWrite={user.role === 'admin' || user.role === 'reception'}
-              onOpenRecord={setRecordTarget}
-            />
-          )}
-          {shown === 'inventory' && <Inventory token={session.access_token} user={user} />}
-          {shown === 'financial' && <Financial token={session.access_token} user={user} />}
-          {shown === 'clinic' &&
-            (user.role === 'admin' ? (
-              <>
-                <section className="panel">
-                  <h2>Dados da clínica</h2>
-                  <form
-                    className="clinic-form"
-                    key={clinic.name}
-                    onSubmit={(event) => {
-                      void renameClinic(event);
-                    }}
-                  >
-                    <label>
-                      Nome da clínica
-                      <input
-                        name="clinicName"
-                        required
-                        maxLength={200}
-                        defaultValue={clinic.name}
-                      />
-                    </label>
-                    <button disabled={busy}>Salvar nome</button>
-                  </form>
-                  {clinicNotice && (
-                    <p role="status" className="success-message">
-                      {clinicNotice}
-                    </p>
-                  )}
-                </section>
-                <UserAdministration
+          <ScreenArea>
+            <div className="area-view" key={view} ref={focusArea}>
+              {errorMessage}
+              {recordTarget && (
+                <Records
                   token={session.access_token}
-                  onIdentityChanged={() => {
-                    void refreshIdentity(session);
-                  }}
+                  user={user}
+                  target={recordTarget}
+                  onClose={() => setRecordTarget(null)}
                 />
-              </>
-            ) : (
-              <section className="panel">
-                <h2>Seu acesso</h2>
-                <dl className="profile">
-                  <div>
-                    <dt>Clínica</dt>
-                    <dd>{clinic.name}</dd>
-                  </div>
-                  <div>
-                    <dt>Nome</dt>
-                    <dd>{user.name}</dd>
-                  </div>
-                  <div>
-                    <dt>Papel</dt>
-                    <dd>{roleLabels[user.role]}</dd>
-                  </div>
-                  {user.crmv && (
-                    <div>
-                      <dt>CRMV</dt>
-                      <dd>
-                        {user.crmv_state} {user.crmv}
-                      </dd>
-                    </div>
-                  )}
-                </dl>
-                <p className="muted">
-                  Para corrigir esses dados ou o acesso de outra pessoa, fale com o administrador da
-                  clínica.
-                </p>
-              </section>
-            ))}
+              )}
+              {view === 'scheduling' && (
+                <Scheduling
+                  token={session.access_token}
+                  user={user}
+                  onOpenRecord={setRecordTarget}
+                />
+              )}
+              {view === 'messaging' && <Messaging token={session.access_token} user={user} />}
+              {view === 'quotes' && <Quotes token={session.access_token} user={user} />}
+              {view === 'tutors' && (
+                <Tutors
+                  token={session.access_token}
+                  canWrite={user.role === 'admin' || user.role === 'reception'}
+                />
+              )}
+              {view === 'patients' && (
+                <Patients
+                  token={session.access_token}
+                  canWrite={user.role === 'admin' || user.role === 'reception'}
+                  onOpenRecord={setRecordTarget}
+                />
+              )}
+              {view === 'inventory' && <Inventory token={session.access_token} user={user} />}
+              {view === 'financial' && <Financial token={session.access_token} user={user} />}
+              {view === 'clinic' &&
+                (user.role === 'admin' ? (
+                  <>
+                    <section className="panel">
+                      <div className="section-heading">
+                        <div>
+                          <h2>Dados da clínica</h2>
+                          <p className="muted">{clinic.name}</p>
+                        </div>
+                        <button onClick={() => setEditingClinic(true)}>
+                          Editar dados da clínica
+                        </button>
+                      </div>
+                      {editingClinic && (
+                        <ActionScreen
+                          title="Editar dados da clínica"
+                          onBack={() => setEditingClinic(false)}
+                          busy={busy}
+                          error={error}
+                          notice={clinicNotice}
+                        >
+                          <form
+                            className="clinic-form"
+                            key={clinic.name}
+                            onSubmit={(event) => {
+                              void renameClinic(event);
+                            }}
+                          >
+                            <label>
+                              Nome da clínica
+                              <input
+                                name="clinicName"
+                                required
+                                maxLength={200}
+                                defaultValue={clinic.name}
+                              />
+                            </label>
+                            <button disabled={busy}>Salvar nome</button>
+                          </form>
+                        </ActionScreen>
+                      )}
+                      <ScreenFeedback notice={clinicNotice} />
+                    </section>
+                    <UserAdministration
+                      token={session.access_token}
+                      onIdentityChanged={() => {
+                        void refreshIdentity(session);
+                      }}
+                    />
+                  </>
+                ) : (
+                  <section className="panel">
+                    <h2>Seu acesso</h2>
+                    <dl className="profile">
+                      <div>
+                        <dt>Clínica</dt>
+                        <dd>{clinic.name}</dd>
+                      </div>
+                      <div>
+                        <dt>Nome</dt>
+                        <dd>{user.name}</dd>
+                      </div>
+                      <div>
+                        <dt>Papel</dt>
+                        <dd>{roleLabels[user.role]}</dd>
+                      </div>
+                      {user.crmv && (
+                        <div>
+                          <dt>CRMV</dt>
+                          <dd>
+                            {user.crmv_state} {user.crmv}
+                          </dd>
+                        </div>
+                      )}
+                    </dl>
+                    <p className="muted">
+                      Para corrigir esses dados ou o acesso de outra pessoa, fale com o
+                      administrador da clínica.
+                    </p>
+                  </section>
+                ))}
+            </div>
+          </ScreenArea>
         </main>
       </div>
     );

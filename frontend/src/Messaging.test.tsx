@@ -84,6 +84,9 @@ describe('Mensagens', () => {
   it('simula a resposta do tutor', async () => {
     const fetchMock = mockApi();
     render(<Messaging token="mock" user={reception} />);
+    fireEvent.click(
+      await screen.findByRole('button', { name: 'Simular resposta do tutor (MOCK)' }),
+    );
     fireEvent.change(await screen.findByLabelText('Telefone do tutor'), {
       target: { value: '(86) 99999-0000' },
     });

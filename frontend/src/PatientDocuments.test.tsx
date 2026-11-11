@@ -67,10 +67,23 @@ function renderDocs(user = vet, documents = [existing], onSaved = vi.fn()) {
       onSaved={onSaved}
     />,
   );
+  fireEvent.click(screen.getByRole('button', { name: 'Ver documentos e laudos' }));
   return onSaved;
 }
 
 describe('Documentos do paciente', () => {
+  it('abre as versões em tela própria e volta à lista de documentos', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response(JSON.stringify([existing]))),
+    );
+    renderDocs(vet, [{ ...existing, version: 2 }]);
+    fireEvent.click(screen.getByRole('button', { name: 'Ver versões anteriores' }));
+    expect(await screen.findByRole('heading', { name: 'Versões do documento' })).toHaveFocus();
+    expect(screen.queryByRole('button', { name: 'Adicionar documento' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Voltar' }));
+    expect(screen.getByRole('button', { name: 'Adicionar documento' })).toBeVisible();
+  });
   it('mostra origem, resumo e arquivo do documento', () => {
     renderDocs();
     expect(screen.getByText('Histórico de outro veterinário ou clínica')).toBeInTheDocument();

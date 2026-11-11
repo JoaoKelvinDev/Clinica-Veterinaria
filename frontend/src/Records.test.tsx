@@ -114,9 +114,9 @@ describe('Prontuário', () => {
     Element.prototype.scrollIntoView = scrolled;
     fireEvent.click(await screen.findByRole('button', { name: 'Corrigir registro' }));
     expect(screen.getByRole('heading', { name: 'Corrigir versão 1' })).toBeInTheDocument();
-    // O formulário abre longe do botão: a tela rola até ele e foca o primeiro campo.
+    // A correção abre em tela própria e o título identifica o novo contexto.
     expect(scrolled).toHaveBeenCalled();
-    expect(screen.getByLabelText('Local do atendimento')).toHaveFocus();
+    expect(screen.getByRole('heading', { name: 'Corrigir versão 1' })).toHaveFocus();
     fireEvent.change(screen.getByLabelText('Diagnóstico presuntivo'), {
       target: { value: 'Suspeita corrigida' },
     });

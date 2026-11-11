@@ -41,6 +41,55 @@ function change(label: string, value: string) {
 }
 
 describe('Cadastros de tutores e animais', () => {
+  it.each(['admin', 'veterinarian', 'assistant', 'reception'] as const)(
+    'preserva a busca ao abrir e voltar do prontuário como %s',
+    async (role) => {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn(async (url: string) => {
+          if (url === '/api/health') return json({ status: 'ok' });
+          if (url === '/api/me')
+            return json({
+              user: {
+                id: 'u-a',
+                clinic_id: 'c-a',
+                name: 'Usuário fictício',
+                role,
+                active: true,
+                crmv: role === 'veterinarian' ? '1234' : null,
+                crmv_state: role === 'veterinarian' ? 'PI' : null,
+              },
+              clinic: { id: 'c-a', name: 'Clínica fictícia' },
+            });
+          if (url.startsWith('/api/patients?')) return json({ items: [patient], total: 1 });
+          if (url.endsWith('/record'))
+            return json({ error: { message: 'Exemplo sem registro clínico' } }, 404);
+          if (url.endsWith('/tutors')) return json([]);
+          return json({ items: [], total: 0 });
+        }),
+      );
+      render(
+        <App
+          auth={{
+            getSession: async () => ({ access_token: 'mock' }),
+            signIn: vi.fn(),
+            signOut: vi.fn(),
+            subscribe: () => vi.fn(),
+          }}
+        />,
+      );
+      fireEvent.click(await screen.findByRole('button', { name: 'Animais' }));
+      await screen.findByRole('button', { name: `Prontuário de ${patient.name}` });
+      const search = screen.getByLabelText('Buscar paciente');
+      fireEvent.change(search, { target: { value: 'Paciente pesquisado' } });
+      fireEvent.click(screen.getByRole('button', { name: `Prontuário de ${patient.name}` }));
+      expect(screen.getByRole('heading', { name: `Prontuário de ${patient.name}` })).toHaveFocus();
+      expect(screen.queryByRole('heading', { name: 'Animais' })).toBeNull();
+      fireEvent.click(screen.getByRole('button', { name: 'Voltar' }));
+      expect(screen.getByLabelText('Buscar paciente')).toBe(search);
+      expect(search).toHaveValue('Paciente pesquisado');
+    },
+  );
   it('cadastra tutor com autorização explícita e origem', async () => {
     const fetchMock = vi.fn(async (_url: string, init?: RequestInit) =>
       init?.method === 'POST' ? json(tutor, 201) : json({ items: [], total: 0 }),

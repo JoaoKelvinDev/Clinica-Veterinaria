@@ -134,6 +134,8 @@ function mockApi({
   return fetchMock;
 }
 function fill(amount = '0,10') {
+  if (!screen.queryByLabelText('Descrição'))
+    fireEvent.click(screen.getByRole('button', { name: /^Novo (lançamento|recebimento)$/ }));
   fireEvent.change(screen.getByLabelText('Descrição'), {
     target: { value: 'Recebimento fictício' },
   });
@@ -146,6 +148,7 @@ describe('Financeiro manual', () => {
   it('busca e seleciona tutor e animal para o lançamento', async () => {
     const fetchMock = mockApi();
     render(<Financial token="mock" user={user} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Novo lançamento' }));
     fireEvent.change(screen.getByLabelText('Buscar tutor por nome'), {
       target: { value: 'Tutor' },
     });
@@ -167,6 +170,7 @@ describe('Financeiro manual', () => {
     expect(JSON.parse(String(sent?.[1]?.body))).toEqual(
       expect.objectContaining({ tutor_id: tutor.id, patient_id: patient.id }),
     );
+    fireEvent.click(screen.getByRole('button', { name: 'Novo lançamento' }));
     expect(screen.getByLabelText('Tutor vinculado')).toHaveValue('');
     expect(screen.getByLabelText('Animal vinculado')).toHaveValue('');
   });
@@ -197,6 +201,7 @@ describe('Financeiro manual', () => {
         patient_id: null,
       }),
     );
+    fireEvent.click(screen.getByRole('button', { name: 'Novo lançamento' }));
     expect(screen.getByLabelText('Descrição')).toHaveValue('');
   });
   it('permite ao administrador registrar uma despesa', async () => {
@@ -272,7 +277,7 @@ describe('Financeiro manual', () => {
     render(<Financial token="mock" user={user} />);
     fireEvent.click(await screen.findByRole('button', { name: 'Estornar Consulta fictícia' }));
     fireEvent.click(screen.getByRole('button', { name: 'Cancelar' }));
-    expect(screen.getByRole('form', { name: 'Novo lançamento' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Novo lançamento' })).toBeVisible();
     fireEvent.click(screen.getByRole('button', { name: 'Estornar Consulta fictícia' }));
     fireEvent.change(screen.getByLabelText('Motivo do estorno'), {
       target: { value: 'Correção fictícia' },

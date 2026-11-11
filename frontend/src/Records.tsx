@@ -1,3 +1,5 @@
+import type { ComponentProps } from 'react';
+import { ActionScreen, ScreenArea, ScreenFeedback } from './Screen';
 import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { apiRequest } from './api';
@@ -15,7 +17,7 @@ import {
   parseWeight,
 } from './records-api';
 import type { PatientRecord, RecordEntry, VaccineRecord, WeightRecord } from './records-api';
-import { reveal } from './reveal';
+
 import { PatientDocuments } from './PatientDocuments';
 import { AiScribe } from './AiScribe';
 import { RecordExports } from './RecordExports';
@@ -38,7 +40,7 @@ function text(data: FormData, name: string): string | null {
   return value === '' ? null : value;
 }
 
-export function Records({
+function RecordsContent({
   token,
   user,
   target,
@@ -189,408 +191,440 @@ export function Records({
   );
 
   return (
-    <section className="panel registry" aria-labelledby="record-title">
-      <div className="section-heading">
-        <div>
-          <h2 id="record-title">Prontuário de {target.patientName}</h2>
-          <p className="muted">
-            Registros não são apagados. Corrigir cria uma nova versão e preserva a anterior.
-          </p>
+    <ActionScreen
+      title={<>Prontuário de {target.patientName}</>}
+      onBack={() => {
+        onClose();
+      }}
+      busy={busy}
+    >
+      <section className="panel registry">
+        <div className="section-heading">
+          <div>
+            <p className="muted">
+              Registros não são apagados. Corrigir cria uma nova versão e preserva a anterior.
+            </p>
+          </div>
         </div>
-        <button className="secondary" onClick={onClose}>
-          Voltar
-        </button>
-      </div>
-      {error && (
-        <p className="form-error" role="alert">
-          {error}
-        </p>
-      )}
-      {notice && (
-        <p className="success-message" role="status">
-          {notice}
-        </p>
-      )}
-      {!record ? (
-        !error && <p role="status">Carregando prontuário…</p>
-      ) : (
-        <>
-          {incompleteTutor && (
-            <p className="confirmation">
-              O responsável principal está sem CPF ou endereço. Esses dados serão exigidos para
-              emitir documentos do prontuário.
-            </p>
-          )}
-          {record.clinical_access && (
-            <RecordExports token={token} user={user} patientId={target.patientId} />
-          )}
-          {!record.clinical_access && (
-            <p className="muted">
-              Seu papel vê somente as datas dos atendimentos. O conteúdo clínico é restrito à equipe
-              clínica.
-            </p>
-          )}
-          {(isVet || canWeigh) && (
-            <div className="actions">
-              {isVet && (
-                <button
-                  disabled={busy || encounters.length === 0}
-                  onClick={() => open({ kind: 'entry', supersedes: null })}
-                >
-                  Novo registro clínico
-                </button>
-              )}
-              {canWeigh && (
-                <button
-                  className="secondary"
-                  disabled={busy}
-                  onClick={() => open({ kind: 'weight', supersedes: null })}
-                >
-                  Registrar peso
-                </button>
-              )}
-              {isVet && (
-                <button
-                  className="secondary"
-                  disabled={busy || encounters.length === 0}
-                  onClick={() => open({ kind: 'vaccine', supersedes: null })}
-                >
-                  Registrar vacina
-                </button>
-              )}
-            </div>
-          )}
-          {isVet && encounters.length === 0 && (
-            <p className="muted">
-              Inicie um atendimento na Agenda para registrar no prontuário deste paciente.
-            </p>
-          )}
-
-          {form?.kind === 'entry' && (
-            <form
-              key={form.supersedes?.id ?? 'novo'}
-              className="registry-form"
-              ref={reveal}
-              onSubmit={(event) => {
-                void submit(event);
-              }}
-            >
-              <h3>
-                {form.supersedes
-                  ? `Corrigir versão ${form.supersedes.version}`
-                  : 'Novo registro clínico'}
-              </h3>
-              {form.supersedes ? (
-                <input type="hidden" name="encounter_id" value={form.supersedes.encounter_id} />
-              ) : (
-                encounterSelect()
-              )}
-              <label>
-                Local do atendimento
-                <input
-                  name="location"
-                  maxLength={200}
-                  defaultValue={form.supersedes?.location}
-                  placeholder="Deixe em branco para usar a clínica"
-                />
-              </label>
-              {entryFields.map(([name, label, required]) => (
-                <label key={name}>
-                  {required ? label : `${label} (opcional)`}
-                  <textarea
-                    name={name}
-                    required={required}
-                    maxLength={name === 'follow_up' ? 500 : 20000}
-                    defaultValue={form.supersedes?.[name] ?? ''}
-                  />
-                </label>
-              ))}
-              <label>
-                Data de retorno (opcional)
-                <input
-                  name="follow_up_on"
-                  type="date"
-                  min={form.supersedes ? undefined : today()}
-                  defaultValue={form.supersedes?.follow_up_on ?? ''}
-                />
-              </label>
-              <p className="muted">
-                Com data, o tutor recebe um lembrete de retorno por WhatsApp, se tiver autorizado.
+        <ScreenFeedback error={error} />
+        <ScreenFeedback notice={notice} />
+        {!record ? (
+          !error && <p role="status">Carregando prontuário…</p>
+        ) : (
+          <>
+            {incompleteTutor && (
+              <p className="confirmation">
+                O responsável principal está sem CPF ou endereço. Esses dados serão exigidos para
+                emitir documentos do prontuário.
               </p>
-              {reasonField}
+            )}
+            {record.clinical_access && (
+              <RecordExports token={token} user={user} patientId={target.patientId} />
+            )}
+            {!record.clinical_access && (
+              <p className="muted">
+                Seu papel vê somente as datas dos atendimentos. O conteúdo clínico é restrito à
+                equipe clínica.
+              </p>
+            )}
+            {(isVet || canWeigh) && (
               <div className="actions">
-                <button disabled={busy}>{busy ? 'Salvando…' : 'Salvar registro'}</button>
-                <button type="button" className="secondary" onClick={() => setForm(null)}>
-                  Cancelar
-                </button>
+                {isVet && (
+                  <button
+                    disabled={busy || encounters.length === 0}
+                    onClick={() => open({ kind: 'entry', supersedes: null })}
+                  >
+                    Novo registro clínico
+                  </button>
+                )}
+                {canWeigh && (
+                  <button
+                    className="secondary"
+                    disabled={busy}
+                    onClick={() => open({ kind: 'weight', supersedes: null })}
+                  >
+                    Registrar peso
+                  </button>
+                )}
+                {isVet && (
+                  <button
+                    className="secondary"
+                    disabled={busy || encounters.length === 0}
+                    onClick={() => open({ kind: 'vaccine', supersedes: null })}
+                  >
+                    Registrar vacina
+                  </button>
+                )}
               </div>
-            </form>
-          )}
+            )}
+            {isVet && encounters.length === 0 && (
+              <p className="muted">
+                Inicie um atendimento na Agenda para registrar no prontuário deste paciente.
+              </p>
+            )}
 
-          {form?.kind === 'weight' && (
-            <form
-              key={form.supersedes?.id ?? 'novo'}
-              className="registry-form"
-              ref={reveal}
-              onSubmit={(event) => {
-                void submit(event);
-              }}
-            >
-              <h3>{form.supersedes ? 'Corrigir peso' : 'Registrar peso'}</h3>
-              <label>
-                Peso em kg
-                <input
-                  name="weight_kg"
-                  required
-                  inputMode="decimal"
-                  pattern="[0-9]+([,.][0-9]{1,3})?"
-                  title="Use até 3 casas decimais, como 12,5"
-                />
-              </label>
-              {reasonField}
-              <div className="actions">
-                <button disabled={busy}>{busy ? 'Salvando…' : 'Salvar peso'}</button>
-                <button type="button" className="secondary" onClick={() => setForm(null)}>
-                  Cancelar
-                </button>
-              </div>
-            </form>
-          )}
+            {form?.kind === 'entry' && (
+              <ActionScreen
+                title={
+                  <>
+                    {form.supersedes
+                      ? `Corrigir versão ${form.supersedes.version}`
+                      : 'Novo registro clínico'}
+                  </>
+                }
+                onBack={() => {
+                  setForm(null);
+                }}
+                busy={busy}
+                error={error}
+                notice={notice}
+              >
+                <form
+                  key={form.supersedes?.id ?? 'novo'}
+                  className="registry-form"
 
-          {form?.kind === 'vaccine' && (
-            <form
-              key={form.supersedes?.id ?? 'novo'}
-              className="registry-form"
-              ref={reveal}
-              onSubmit={(event) => {
-                void submit(event);
-              }}
-            >
-              <h3>{form.supersedes ? 'Corrigir vacina' : 'Registrar vacina'}</h3>
-              <p className="muted">Campos da carteira de vacinação (Resolução CFMV 1321/2020).</p>
-              {encounterSelect(form.supersedes?.encounter_id)}
-              <label>
-                Vacina
-                <input
-                  name="vaccine_name"
-                  required
-                  maxLength={200}
-                  defaultValue={form.supersedes?.vaccine_name}
-                />
-              </label>
-              <div className="field-pair">
-                <label>
-                  Partida (lote)
-                  <input
-                    name="batch"
-                    required
-                    maxLength={80}
-                    defaultValue={form.supersedes?.batch}
-                  />
-                </label>
-                <label>
-                  Dose
-                  <input
-                    name="dose"
-                    required
-                    maxLength={80}
-                    placeholder="1ª dose, reforço…"
-                    defaultValue={form.supersedes?.dose}
-                  />
-                </label>
-              </div>
-              <label>
-                Fabricante
-                <input
-                  name="manufacturer"
-                  required
-                  maxLength={200}
-                  defaultValue={form.supersedes?.manufacturer}
-                />
-              </label>
-              <div className="field-pair">
-                <label>
-                  Fabricação
-                  <input
-                    name="manufactured_on"
-                    type="date"
-                    required
-                    defaultValue={form.supersedes?.manufactured_on}
-                  />
-                </label>
-                <label>
-                  Validade
-                  <input
-                    name="expires_on"
-                    type="date"
-                    required
-                    defaultValue={form.supersedes?.expires_on}
-                  />
-                </label>
-              </div>
-              <label>
-                Revacinação prevista (opcional)
-                <input
-                  name="next_dose_on"
-                  type="date"
-                  defaultValue={form.supersedes?.next_dose_on ?? ''}
-                />
-              </label>
-              {reasonField}
-              <div className="actions">
-                <button disabled={busy}>{busy ? 'Salvando…' : 'Salvar vacina'}</button>
-                <button type="button" className="secondary" onClick={() => setForm(null)}>
-                  Cancelar
-                </button>
-              </div>
-            </form>
-          )}
-
-          {history && (
-            <section
-              className="registry-form"
-              aria-labelledby="history-title"
-              key={history[0]?.root_id}
-              ref={reveal}
-            >
-              <div className="section-heading">
-                <h3 id="history-title">Histórico de versões</h3>
-                <button className="secondary" onClick={() => setHistory(null)}>
-                  Fechar histórico
-                </button>
-              </div>
-              {history.map((item) => (
-                <EntryView key={item.id} item={item} />
-              ))}
-            </section>
-          )}
-
-          {record.clinical_access && (
-            <AiScribe
-              token={token}
-              user={user}
-              patientId={target.patientId}
-              encounters={encounters}
-              defaultEncounter={defaultEncounter}
-              onApproved={() => setRevision((current) => current + 1)}
-            />
-          )}
-
-          <h3>Atendimentos</h3>
-          {encounters.length === 0 ? (
-            <p>Nenhum atendimento registrado para este paciente.</p>
-          ) : (
-            encounters.map((visit) => {
-              const entries = record.entries.filter((item) => item.encounter_id === visit.id);
-              const vaccines = record.vaccines.filter((item) => item.encounter_id === visit.id);
-              return (
-                <article key={visit.id} className="visit">
-                  <h4>
-                    {displayDateTime(visit.started_at)} com {visit.veterinarian_name}
-                    {visit.completed_at ? '' : ' (em andamento)'}
-                  </h4>
-                  {record.clinical_access && entries.length + vaccines.length === 0 && (
-                    <p className="muted">Sem registros neste atendimento.</p>
+                  onSubmit={(event) => {
+                    void submit(event);
+                  }}
+                >
+                  {form.supersedes ? (
+                    <input type="hidden" name="encounter_id" value={form.supersedes.encounter_id} />
+                  ) : (
+                    encounterSelect()
                   )}
-                  {entries.map((item) => (
-                    <div key={item.id}>
-                      <EntryView item={item} />
-                      <div className="actions">
-                        {item.version > 1 && (
-                          <button
-                            className="secondary"
-                            disabled={busy}
-                            onClick={() => {
-                              void showHistory(item);
-                            }}
-                          >
-                            Ver versões anteriores
-                          </button>
-                        )}
+                  <label>
+                    Local do atendimento
+                    <input
+                      name="location"
+                      maxLength={200}
+                      defaultValue={form.supersedes?.location}
+                      placeholder="Deixe em branco para usar a clínica"
+                    />
+                  </label>
+                  {entryFields.map(([name, label, required]) => (
+                    <label key={name}>
+                      {required ? label : `${label} (opcional)`}
+                      <textarea
+                        name={name}
+                        required={required}
+                        maxLength={name === 'follow_up' ? 500 : 20000}
+                        defaultValue={form.supersedes?.[name] ?? ''}
+                      />
+                    </label>
+                  ))}
+                  <label>
+                    Data de retorno (opcional)
+                    <input
+                      name="follow_up_on"
+                      type="date"
+                      min={form.supersedes ? undefined : today()}
+                      defaultValue={form.supersedes?.follow_up_on ?? ''}
+                    />
+                  </label>
+                  <p className="muted">
+                    Com data, o tutor recebe um lembrete de retorno por WhatsApp, se tiver
+                    autorizado.
+                  </p>
+                  {reasonField}
+                  <div className="actions">
+                    <button disabled={busy}>{busy ? 'Salvando…' : 'Salvar registro'}</button>
+                    <button type="button" className="secondary" onClick={() => setForm(null)}>
+                      Cancelar
+                    </button>
+                  </div>
+                </form>
+              </ActionScreen>
+            )}
+
+            {form?.kind === 'weight' && (
+              <ActionScreen
+                title={<>{form.supersedes ? 'Corrigir peso' : 'Registrar peso'}</>}
+                onBack={() => {
+                  setForm(null);
+                }}
+                busy={busy}
+                error={error}
+                notice={notice}
+              >
+                <form
+                  key={form.supersedes?.id ?? 'novo'}
+                  className="registry-form"
+
+                  onSubmit={(event) => {
+                    void submit(event);
+                  }}
+                >
+                  <label>
+                    Peso em kg
+                    <input
+                      name="weight_kg"
+                      required
+                      inputMode="decimal"
+                      pattern="[0-9]+([,.][0-9]{1,3})?"
+                      title="Use até 3 casas decimais, como 12,5"
+                    />
+                  </label>
+                  {reasonField}
+                  <div className="actions">
+                    <button disabled={busy}>{busy ? 'Salvando…' : 'Salvar peso'}</button>
+                    <button type="button" className="secondary" onClick={() => setForm(null)}>
+                      Cancelar
+                    </button>
+                  </div>
+                </form>
+              </ActionScreen>
+            )}
+
+            {form?.kind === 'vaccine' && (
+              <ActionScreen
+                title={<>{form.supersedes ? 'Corrigir vacina' : 'Registrar vacina'}</>}
+                onBack={() => {
+                  setForm(null);
+                }}
+                busy={busy}
+                error={error}
+                notice={notice}
+              >
+                <form
+                  key={form.supersedes?.id ?? 'novo'}
+                  className="registry-form"
+
+                  onSubmit={(event) => {
+                    void submit(event);
+                  }}
+                >
+                  <p className="muted">
+                    Campos da carteira de vacinação (Resolução CFMV 1321/2020).
+                  </p>
+                  {encounterSelect(form.supersedes?.encounter_id)}
+                  <label>
+                    Vacina
+                    <input
+                      name="vaccine_name"
+                      required
+                      maxLength={200}
+                      defaultValue={form.supersedes?.vaccine_name}
+                    />
+                  </label>
+                  <div className="field-pair">
+                    <label>
+                      Partida (lote)
+                      <input
+                        name="batch"
+                        required
+                        maxLength={80}
+                        defaultValue={form.supersedes?.batch}
+                      />
+                    </label>
+                    <label>
+                      Dose
+                      <input
+                        name="dose"
+                        required
+                        maxLength={80}
+                        placeholder="1ª dose, reforço…"
+                        defaultValue={form.supersedes?.dose}
+                      />
+                    </label>
+                  </div>
+                  <label>
+                    Fabricante
+                    <input
+                      name="manufacturer"
+                      required
+                      maxLength={200}
+                      defaultValue={form.supersedes?.manufacturer}
+                    />
+                  </label>
+                  <div className="field-pair">
+                    <label>
+                      Fabricação
+                      <input
+                        name="manufactured_on"
+                        type="date"
+                        required
+                        defaultValue={form.supersedes?.manufactured_on}
+                      />
+                    </label>
+                    <label>
+                      Validade
+                      <input
+                        name="expires_on"
+                        type="date"
+                        required
+                        defaultValue={form.supersedes?.expires_on}
+                      />
+                    </label>
+                  </div>
+                  <label>
+                    Revacinação prevista (opcional)
+                    <input
+                      name="next_dose_on"
+                      type="date"
+                      defaultValue={form.supersedes?.next_dose_on ?? ''}
+                    />
+                  </label>
+                  {reasonField}
+                  <div className="actions">
+                    <button disabled={busy}>{busy ? 'Salvando…' : 'Salvar vacina'}</button>
+                    <button type="button" className="secondary" onClick={() => setForm(null)}>
+                      Cancelar
+                    </button>
+                  </div>
+                </form>
+              </ActionScreen>
+            )}
+
+            {history && (
+              <ActionScreen
+                title={<>Histórico de versões</>}
+                onBack={() => {
+                  setHistory(null);
+                }}
+                busy={busy}
+                error={error}
+                notice={notice}
+              >
+                <section
+                  className="registry-form"
+
+                  key={history[0]?.root_id}
+                >
+                  <div className="section-heading"></div>
+                  {history.map((item) => (
+                    <EntryView key={item.id} item={item} />
+                  ))}
+                </section>
+              </ActionScreen>
+            )}
+
+            {record.clinical_access && (
+              <AiScribe
+                token={token}
+                user={user}
+                patientId={target.patientId}
+                encounters={encounters}
+                defaultEncounter={defaultEncounter}
+                onApproved={() => setRevision((current) => current + 1)}
+              />
+            )}
+
+            <h3>Atendimentos</h3>
+            {encounters.length === 0 ? (
+              <p>Nenhum atendimento registrado para este paciente.</p>
+            ) : (
+              encounters.map((visit) => {
+                const entries = record.entries.filter((item) => item.encounter_id === visit.id);
+                const vaccines = record.vaccines.filter((item) => item.encounter_id === visit.id);
+                return (
+                  <article key={visit.id} className="visit">
+                    <h4>
+                      {displayDateTime(visit.started_at)} com {visit.veterinarian_name}
+                      {visit.completed_at ? '' : ' (em andamento)'}
+                    </h4>
+                    {record.clinical_access && entries.length + vaccines.length === 0 && (
+                      <p className="muted">Sem registros neste atendimento.</p>
+                    )}
+                    {entries.map((item) => (
+                      <div key={item.id}>
+                        <EntryView item={item} />
+                        <div className="actions">
+                          {item.version > 1 && (
+                            <button
+                              className="secondary"
+                              disabled={busy}
+                              onClick={() => {
+                                void showHistory(item);
+                              }}
+                            >
+                              Ver versões anteriores
+                            </button>
+                          )}
+                          {item.author_id === user.id && (
+                            <button
+                              className="secondary"
+                              disabled={busy}
+                              onClick={() => open({ kind: 'entry', supersedes: item })}
+                            >
+                              Corrigir registro
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                    {vaccines.map((item) => (
+                      <div key={item.id} className="record-line">
+                        <p>
+                          <strong>{item.vaccine_name}</strong>, {item.dose}. Partida {item.batch},{' '}
+                          {item.manufacturer}, fabricação {displayDate(item.manufactured_on)},
+                          validade {displayDate(item.expires_on)}.
+                          {item.next_dose_on &&
+                            ` Revacinação prevista para ${displayDate(item.next_dose_on)}.`}
+                        </p>
+                        <p className="muted">
+                          Aplicada por {item.author_name} ({item.author_crmv}) em{' '}
+                          {displayDateTime(item.created_at)}
+                          {item.correction_reason && `. Corrigida: ${item.correction_reason}`}
+                        </p>
                         {item.author_id === user.id && (
                           <button
                             className="secondary"
                             disabled={busy}
-                            onClick={() => open({ kind: 'entry', supersedes: item })}
+                            onClick={() => open({ kind: 'vaccine', supersedes: item })}
                           >
-                            Corrigir registro
+                            Corrigir vacina
                           </button>
                         )}
                       </div>
-                    </div>
-                  ))}
-                  {vaccines.map((item) => (
-                    <div key={item.id} className="record-line">
-                      <p>
-                        <strong>{item.vaccine_name}</strong>, {item.dose}. Partida {item.batch},{' '}
-                        {item.manufacturer}, fabricação {displayDate(item.manufactured_on)},
-                        validade {displayDate(item.expires_on)}.
-                        {item.next_dose_on &&
-                          ` Revacinação prevista para ${displayDate(item.next_dose_on)}.`}
-                      </p>
-                      <p className="muted">
-                        Aplicada por {item.author_name} ({item.author_crmv}) em{' '}
-                        {displayDateTime(item.created_at)}
-                        {item.correction_reason && `. Corrigida: ${item.correction_reason}`}
-                      </p>
-                      {item.author_id === user.id && (
-                        <button
-                          className="secondary"
-                          disabled={busy}
-                          onClick={() => open({ kind: 'vaccine', supersedes: item })}
-                        >
-                          Corrigir vacina
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                </article>
-              );
-            })
-          )}
+                    ))}
+                  </article>
+                );
+              })
+            )}
 
-          {record.clinical_access && (
-            <>
-              <h3>Pesagens</h3>
-              {record.weights.length === 0 ? (
-                <p>Nenhum peso registrado.</p>
-              ) : (
-                <ul className="link-list">
-                  {record.weights.map((item) => (
-                    <li key={item.id}>
-                      <p>
-                        <strong>{displayWeight(item.weight_grams)}</strong>{' '}
-                        <span className="muted">
-                          em {displayDateTime(item.created_at)} por {item.author_name}
-                          {item.correction_reason && `. Corrigido: ${item.correction_reason}`}
-                        </span>
-                      </p>
-                      {item.author_id === user.id && (
-                        <button
-                          className="secondary"
-                          disabled={busy}
-                          onClick={() => open({ kind: 'weight', supersedes: item })}
-                        >
-                          Corrigir peso
-                        </button>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              )}
-              <PatientDocuments
-                token={token}
-                user={user}
-                patientId={target.patientId}
-                documents={record.documents}
-                encounters={encounters}
-                onSaved={() => setRevision((current) => current + 1)}
-              />
-            </>
-          )}
-        </>
-      )}
-    </section>
+            {record.clinical_access && (
+              <>
+                <h3>Pesagens</h3>
+                {record.weights.length === 0 ? (
+                  <p>Nenhum peso registrado.</p>
+                ) : (
+                  <ul className="link-list">
+                    {record.weights.map((item) => (
+                      <li key={item.id}>
+                        <p>
+                          <strong>{displayWeight(item.weight_grams)}</strong>{' '}
+                          <span className="muted">
+                            em {displayDateTime(item.created_at)} por {item.author_name}
+                            {item.correction_reason && `. Corrigido: ${item.correction_reason}`}
+                          </span>
+                        </p>
+                        {item.author_id === user.id && (
+                          <button
+                            className="secondary"
+                            disabled={busy}
+                            onClick={() => open({ kind: 'weight', supersedes: item })}
+                          >
+                            Corrigir peso
+                          </button>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <PatientDocuments
+                  token={token}
+                  user={user}
+                  patientId={target.patientId}
+                  documents={record.documents}
+                  encounters={encounters}
+                  onSaved={() => setRevision((current) => current + 1)}
+                />
+              </>
+            )}
+          </>
+        )}
+      </section>
+    </ActionScreen>
   );
 }
 
@@ -614,5 +648,13 @@ function EntryView({ item }: { item: RecordEntry }) {
         {item.correction_reason && `. Motivo da correção: ${item.correction_reason}`}
       </p>
     </div>
+  );
+}
+
+export function Records(props: ComponentProps<typeof RecordsContent>) {
+  return (
+    <ScreenArea>
+      <RecordsContent {...props} />
+    </ScreenArea>
   );
 }

@@ -1,10 +1,11 @@
+import type { ComponentProps } from 'react';
+import { ActionScreen, ScreenArea, ScreenFeedback } from './Screen';
 import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { apiRequest, parseUser, roleLabels } from './api';
 import type { Role, UserProfile } from './api';
-import { reveal } from './reveal';
 
-export function UserAdministration({
+function UserAdministrationContent({
   token,
   onIdentityChanged,
 }: {
@@ -67,16 +68,8 @@ export function UserAdministration({
     <section className="panel" aria-labelledby="users-title">
       <h2 id="users-title">Equipe da clínica</h2>
       {loading && <p role="status">Carregando usuários…</p>}
-      {error && (
-        <p role="alert" className="form-error">
-          {error}
-        </p>
-      )}
-      {notice && (
-        <p role="status" className="success-message">
-          {notice}
-        </p>
-      )}
+      <ScreenFeedback error={error} />
+      <ScreenFeedback notice={notice} />
       <div className="table-scroll">
         <table>
           <thead>
@@ -115,80 +108,97 @@ export function UserAdministration({
         </table>
       </div>
       {editing && (
-        <form
-          key={editing.id}
-          className="edit-form"
-          ref={reveal}
-          onSubmit={(event) => {
-            void save(event);
+        <ActionScreen
+          title={<>Editar usuário</>}
+          onBack={() => {
+            setEditing(null);
           }}
+          busy={saving}
+          error={error}
+          notice={notice}
         >
-          <h3>Editar usuário</h3>
-          <label>
-            Nome
-            <input
-              required
-              maxLength={200}
-              value={editing.name}
-              onChange={(e) => setEditing({ ...editing, name: e.target.value })}
-            />
-          </label>
-          <label>
-            Função
-            <select
-              value={editing.role}
-              onChange={(e) => setEditing({ ...editing, role: e.target.value as Role })}
-            >
-              {Object.entries(roleLabels).map(([value, label]) => (
-                <option value={value} key={value}>
-                  {label}
-                </option>
-              ))}
-            </select>
-          </label>
-          <div className="field-pair">
+          <form
+            key={editing.id}
+            className="edit-form"
+
+            onSubmit={(event) => {
+              void save(event);
+            }}
+          >
             <label>
-              CRMV
+              Nome
               <input
-                maxLength={30}
-                required={editing.role === 'veterinarian'}
-                value={editing.crmv ?? ''}
-                onChange={(e) => setEditing({ ...editing, crmv: e.target.value })}
+                required
+                maxLength={200}
+                value={editing.name}
+                onChange={(e) => setEditing({ ...editing, name: e.target.value })}
               />
             </label>
             <label>
-              UF do CRMV
-              <input
-                maxLength={2}
-                required={editing.role === 'veterinarian'}
-                value={editing.crmv_state ?? ''}
-                onChange={(e) =>
-                  setEditing({ ...editing, crmv_state: e.target.value.toUpperCase() })
-                }
-              />
+              Função
+              <select
+                value={editing.role}
+                onChange={(e) => setEditing({ ...editing, role: e.target.value as Role })}
+              >
+                {Object.entries(roleLabels).map(([value, label]) => (
+                  <option value={value} key={value}>
+                    {label}
+                  </option>
+                ))}
+              </select>
             </label>
-          </div>
-          <label className="checkbox">
-            <input
-              type="checkbox"
-              checked={editing.active}
-              onChange={(e) => setEditing({ ...editing, active: e.target.checked })}
-            />
-            Usuário ativo
-          </label>
-          <div className="actions">
-            <button disabled={saving}>{saving ? 'Salvando…' : 'Salvar alterações'}</button>
-            <button
-              disabled={saving}
-              type="button"
-              className="secondary"
-              onClick={() => setEditing(null)}
-            >
-              Cancelar
-            </button>
-          </div>
-        </form>
+            <div className="field-pair">
+              <label>
+                CRMV
+                <input
+                  maxLength={30}
+                  required={editing.role === 'veterinarian'}
+                  value={editing.crmv ?? ''}
+                  onChange={(e) => setEditing({ ...editing, crmv: e.target.value })}
+                />
+              </label>
+              <label>
+                UF do CRMV
+                <input
+                  maxLength={2}
+                  required={editing.role === 'veterinarian'}
+                  value={editing.crmv_state ?? ''}
+                  onChange={(e) =>
+                    setEditing({ ...editing, crmv_state: e.target.value.toUpperCase() })
+                  }
+                />
+              </label>
+            </div>
+            <label className="checkbox">
+              <input
+                type="checkbox"
+                checked={editing.active}
+                onChange={(e) => setEditing({ ...editing, active: e.target.checked })}
+              />
+              Usuário ativo
+            </label>
+            <div className="actions">
+              <button disabled={saving}>{saving ? 'Salvando…' : 'Salvar alterações'}</button>
+              <button
+                disabled={saving}
+                type="button"
+                className="secondary"
+                onClick={() => setEditing(null)}
+              >
+                Cancelar
+              </button>
+            </div>
+          </form>
+        </ActionScreen>
       )}
     </section>
+  );
+}
+
+export function UserAdministration(props: ComponentProps<typeof UserAdministrationContent>) {
+  return (
+    <ScreenArea>
+      <UserAdministrationContent {...props} />
+    </ScreenArea>
   );
 }

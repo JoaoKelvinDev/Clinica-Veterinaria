@@ -1,3 +1,5 @@
+import type { ComponentProps } from 'react';
+import { ActionScreen, ScreenArea, ScreenFeedback } from './Screen';
 import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { apiRequest, parseUser } from './api';
@@ -15,7 +17,6 @@ import {
 } from './scheduling-api';
 import type { Appointment, AppointmentStatus, Encounter } from './scheduling-api';
 import type { RecordTarget } from './Records';
-import { reveal } from './reveal';
 
 interface Draft {
   id: string | null;
@@ -39,7 +40,7 @@ const actionLabels = {
   complete: 'Concluir atendimento',
 };
 
-export function Scheduling({
+function SchedulingContent({
   token,
   user,
   onOpenRecord,
@@ -325,184 +326,200 @@ export function Scheduling({
           Atualizar agenda
         </button>
       </div>
-      {error && (
-        <p className="form-error" role="alert">
-          {error}
-        </p>
-      )}
-      {notice && (
-        <p className="success-message" role="status">
-          {notice}
-        </p>
-      )}
+      <ScreenFeedback error={error} />
+      <ScreenFeedback notice={notice} />
       {draft && (
-        <form
-          key={draft.id ?? (draft.walkIn ? 'avulso' : 'novo')}
-          className="registry-form"
-          ref={reveal}
-          onSubmit={(event) => {
-            void save(event);
-          }}
-        >
-          <h3>
-            {draft.walkIn
-              ? 'Abrir atendimento avulso'
-              : draft.id
-                ? 'Reagendar consulta'
-                : 'Cadastrar agendamento'}
-          </h3>
-          <label>
-            Buscar paciente por nome ou microchip
-            <input
-              value={patientQuery}
-              maxLength={100}
-              onChange={(event) => setPatientQuery(event.target.value)}
-            />
-          </label>
-          <div>
-            <button
-              type="button"
-              className="secondary"
-              disabled={busy}
-              onClick={() => {
-                void searchPatients();
-              }}
-            >
-              Buscar pacientes
-            </button>
-          </div>
-          {patientSearched && (
-            <p className="muted">
-              {patients.length
-                ? 'Até 20 resultados; refine a busca se necessário.'
-                : 'Nenhum paciente encontrado.'}
-            </p>
-          )}
-          <label>
-            Paciente
-            <select
-              required
-              value={draft.patient_id}
-              onChange={(event) => {
-                const found = patients.find((patient) => patient.id === event.target.value);
-                setDraft({
-                  ...draft,
-                  patient_id: event.target.value,
-                  patient_name: found?.name ?? '',
-                });
-              }}
-            >
-              <option value="">Selecione o paciente</option>
-              {draft.patient_id && !patients.some((patient) => patient.id === draft.patient_id) && (
-                <option value={draft.patient_id}>{draft.patient_name}</option>
-              )}
-              {patients.map((patient) => (
-                <option key={patient.id} value={patient.id}>
-                  {patient.name} · {patient.species}
-                  {patient.microchip ? ` · ${patient.microchip}` : ''}
-                </option>
-              ))}
-            </select>
-          </label>
-          {!draft.walkIn && (
+        <ActionScreen
+          title={
             <>
-              <label>
-                Veterinário responsável
-                <select
-                  required
-                  value={draft.veterinarian_id}
-                  onChange={(event) => setDraft({ ...draft, veterinarian_id: event.target.value })}
-                >
-                  <option value="">Selecione o veterinário</option>
-                  {draft.veterinarian_id &&
-                    !vets.some((vet) => vet.id === draft.veterinarian_id) && (
-                      <option value={draft.veterinarian_id} disabled>
-                        Profissional indisponível — selecione outro
-                      </option>
-                    )}
-                  {vets.map((vet) => (
-                    <option key={vet.id} value={vet.id}>
-                      {vet.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <div className="field-pair">
-                <label>
-                  Início
-                  <input
-                    required
-                    type="datetime-local"
-                    value={draft.starts_at}
-                    onChange={(event) => setDraft({ ...draft, starts_at: event.target.value })}
-                  />
-                </label>
-                <label>
-                  Fim
-                  <input
-                    required
-                    type="datetime-local"
-                    value={draft.ends_at}
-                    onChange={(event) => setDraft({ ...draft, ends_at: event.target.value })}
-                  />
-                </label>
-              </div>
-              <label>
-                Tipo de atendimento
-                <input
-                  required
-                  maxLength={80}
-                  value={draft.kind}
-                  onChange={(event) => setDraft({ ...draft, kind: event.target.value })}
-                  placeholder="Consulta, retorno, vacinação…"
-                />
-              </label>
+              {draft.walkIn
+                ? 'Abrir atendimento avulso'
+                : draft.id
+                  ? 'Reagendar consulta'
+                  : 'Cadastrar agendamento'}
             </>
-          )}
-          <div className="actions">
-            <button disabled={busy}>
-              {busy
-                ? 'Salvando…'
-                : draft.walkIn
-                  ? 'Iniciar atendimento avulso'
-                  : 'Salvar agendamento'}
-            </button>
-            <button
-              type="button"
-              className="secondary"
-              disabled={busy}
-              onClick={() => {
-                setDraft(null);
-                setError('');
-              }}
-            >
-              Cancelar edição
-            </button>
-          </div>
-        </form>
+          }
+          onBack={() => {
+            setDraft(null);
+          }}
+          busy={busy}
+          error={error}
+          notice={notice}
+        >
+          <form
+            key={draft.id ?? (draft.walkIn ? 'avulso' : 'novo')}
+            className="registry-form"
+
+            onSubmit={(event) => {
+              void save(event);
+            }}
+          >
+            <label>
+              Buscar paciente por nome ou microchip
+              <input
+                value={patientQuery}
+                maxLength={100}
+                onChange={(event) => setPatientQuery(event.target.value)}
+              />
+            </label>
+            <div>
+              <button
+                type="button"
+                className="secondary"
+                disabled={busy}
+                onClick={() => {
+                  void searchPatients();
+                }}
+              >
+                Buscar pacientes
+              </button>
+            </div>
+            {patientSearched && (
+              <p className="muted">
+                {patients.length
+                  ? 'Até 20 resultados; refine a busca se necessário.'
+                  : 'Nenhum paciente encontrado.'}
+              </p>
+            )}
+            <label>
+              Paciente
+              <select
+                required
+                value={draft.patient_id}
+                onChange={(event) => {
+                  const found = patients.find((patient) => patient.id === event.target.value);
+                  setDraft({
+                    ...draft,
+                    patient_id: event.target.value,
+                    patient_name: found?.name ?? '',
+                  });
+                }}
+              >
+                <option value="">Selecione o paciente</option>
+                {draft.patient_id &&
+                  !patients.some((patient) => patient.id === draft.patient_id) && (
+                    <option value={draft.patient_id}>{draft.patient_name}</option>
+                  )}
+                {patients.map((patient) => (
+                  <option key={patient.id} value={patient.id}>
+                    {patient.name} · {patient.species}
+                    {patient.microchip ? ` · ${patient.microchip}` : ''}
+                  </option>
+                ))}
+              </select>
+            </label>
+            {!draft.walkIn && (
+              <>
+                <label>
+                  Veterinário responsável
+                  <select
+                    required
+                    value={draft.veterinarian_id}
+                    onChange={(event) =>
+                      setDraft({ ...draft, veterinarian_id: event.target.value })
+                    }
+                  >
+                    <option value="">Selecione o veterinário</option>
+                    {draft.veterinarian_id &&
+                      !vets.some((vet) => vet.id === draft.veterinarian_id) && (
+                        <option value={draft.veterinarian_id} disabled>
+                          Profissional indisponível — selecione outro
+                        </option>
+                      )}
+                    {vets.map((vet) => (
+                      <option key={vet.id} value={vet.id}>
+                        {vet.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <div className="field-pair">
+                  <label>
+                    Início
+                    <input
+                      required
+                      type="datetime-local"
+                      value={draft.starts_at}
+                      onChange={(event) => setDraft({ ...draft, starts_at: event.target.value })}
+                    />
+                  </label>
+                  <label>
+                    Fim
+                    <input
+                      required
+                      type="datetime-local"
+                      value={draft.ends_at}
+                      onChange={(event) => setDraft({ ...draft, ends_at: event.target.value })}
+                    />
+                  </label>
+                </div>
+                <label>
+                  Tipo de atendimento
+                  <input
+                    required
+                    maxLength={80}
+                    value={draft.kind}
+                    onChange={(event) => setDraft({ ...draft, kind: event.target.value })}
+                    placeholder="Consulta, retorno, vacinação…"
+                  />
+                </label>
+              </>
+            )}
+            <div className="actions">
+              <button disabled={busy}>
+                {busy
+                  ? 'Salvando…'
+                  : draft.walkIn
+                    ? 'Iniciar atendimento avulso'
+                    : 'Salvar agendamento'}
+              </button>
+              <button
+                type="button"
+                className="secondary"
+                disabled={busy}
+                onClick={() => {
+                  setDraft(null);
+                  setError('');
+                }}
+              >
+                Cancelar edição
+              </button>
+            </div>
+          </form>
+        </ActionScreen>
       )}
       {action && (
-        <div className="confirmation" key={`${action.item.id}-${action.kind}`} ref={reveal}>
-          <p>
-            <strong>{actionLabels[action.kind]}</strong> de {action.item.patient_name}?
-          </p>
-          {(action.kind === 'cancelled' || action.kind === 'no_show') && (
-            <p>O horário será liberado e o agendamento será preservado.</p>
-          )}
-          <div className="actions">
-            <button
-              disabled={busy}
-              onClick={() => {
-                void executeAction();
-              }}
-            >
-              Confirmar operação
-            </button>
-            <button className="secondary" disabled={busy} onClick={() => setAction(null)}>
-              Voltar
-            </button>
+        <ActionScreen
+          title="Confirmar ação na agenda"
+          onBack={() => {
+            setAction(null);
+          }}
+          busy={busy}
+          error={error}
+          notice={notice}
+        >
+          <div className="confirmation" key={`${action.item.id}-${action.kind}`}>
+            <p>
+              <strong>{actionLabels[action.kind]}</strong> de {action.item.patient_name}?
+            </p>
+            {(action.kind === 'cancelled' || action.kind === 'no_show') && (
+              <p>O horário será liberado e o agendamento será preservado.</p>
+            )}
+            <div className="actions">
+              <button
+                disabled={busy}
+                onClick={() => {
+                  void executeAction();
+                }}
+              >
+                Confirmar operação
+              </button>
+              <button className="secondary" disabled={busy} onClick={() => setAction(null)}>
+                Voltar
+              </button>
+            </div>
           </div>
-        </div>
+        </ActionScreen>
       )}
       <h3>Consultas agendadas</h3>
       {loading ? (
@@ -693,5 +710,13 @@ export function Scheduling({
         </div>
       </div>
     </section>
+  );
+}
+
+export function Scheduling(props: ComponentProps<typeof SchedulingContent>) {
+  return (
+    <ScreenArea>
+      <SchedulingContent {...props} />
+    </ScreenArea>
   );
 }

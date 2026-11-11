@@ -47,6 +47,18 @@ async function enter() {
 }
 
 describe('Autenticação e permissões', () => {
+  it('abre os dados da clínica em tela própria e volta à equipe', async () => {
+    mockApi();
+    render(<App auth={gateway(session)} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Clínica e equipe' }));
+    await screen.findByRole('heading', { name: 'Equipe da clínica' });
+    fireEvent.click(screen.getByRole('button', { name: 'Editar dados da clínica' }));
+    expect(screen.getByLabelText('Nome da clínica')).toBeVisible();
+    expect(screen.queryByRole('heading', { name: 'Equipe da clínica' })).toBeNull();
+    expect(screen.getByRole('heading', { name: 'Editar dados da clínica' })).toHaveFocus();
+    fireEvent.click(screen.getByRole('button', { name: 'Voltar' }));
+    expect(screen.getByRole('heading', { name: 'Equipe da clínica' })).toBeVisible();
+  });
   it('entra, apresenta a clínica e encerra a sessão sem manter seus dados', async () => {
     const auth = gateway();
     mockApi();

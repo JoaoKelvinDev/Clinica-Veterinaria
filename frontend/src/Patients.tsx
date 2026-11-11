@@ -1,3 +1,5 @@
+import type { ComponentProps } from 'react';
+import { ActionScreen, ScreenArea, ScreenFeedback } from './Screen';
 import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { apiRequest } from './api';
@@ -5,7 +7,6 @@ import { PatientTutors } from './PatientTutors';
 import type { RecordTarget } from './Records';
 import { errorMessage, parsePage, parsePatient } from './registry-api';
 import type { Page, Patient } from './registry-api';
-import { reveal } from './reveal';
 
 interface Draft {
   id: string | null;
@@ -34,7 +35,7 @@ const empty: Draft = {
   notes: '',
 };
 
-export function Patients({
+function PatientsContent({
   token,
   canWrite,
   onOpenRecord,
@@ -190,16 +191,8 @@ export function Patients({
         </label>
         <button className="secondary">Pesquisar</button>
       </form>
-      {error && (
-        <p role="alert" className="form-error">
-          {error}
-        </p>
-      )}
-      {notice && (
-        <p role="status" className="success-message">
-          {notice}
-        </p>
-      )}
+      <ScreenFeedback error={error} />
+      <ScreenFeedback notice={notice} />
       {loading ? (
         <p role="status">Carregando pacientes…</p>
       ) : page.items.length === 0 ? (
@@ -299,153 +292,174 @@ export function Patients({
         </div>
       </div>
       {archive && (
-        <div className="confirmation" key={archive.id} ref={reveal}>
-          <p>
-            Arquivar <strong>{archive.name}</strong>? O cadastro e os vínculos serão preservados.
-          </p>
-          <div className="actions">
-            <button
-              disabled={saving}
-              onClick={() => {
-                void confirmArchive();
-              }}
-            >
-              Confirmar arquivamento
-            </button>
-            <button className="secondary" disabled={saving} onClick={() => setArchive(null)}>
-              Cancelar
-            </button>
+        <ActionScreen
+          title="Arquivar paciente"
+          onBack={() => {
+            setArchive(null);
+          }}
+          busy={saving}
+          error={error}
+          notice={notice}
+        >
+          <div className="confirmation" key={archive.id}>
+            <p>
+              Arquivar <strong>{archive.name}</strong>? O cadastro e os vínculos serão preservados.
+            </p>
+            <div className="actions">
+              <button
+                disabled={saving}
+                onClick={() => {
+                  void confirmArchive();
+                }}
+              >
+                Confirmar arquivamento
+              </button>
+              <button className="secondary" disabled={saving} onClick={() => setArchive(null)}>
+                Cancelar
+              </button>
+            </div>
           </div>
-        </div>
+        </ActionScreen>
       )}
       {draft && (
-        <form
-          key={draft.id ?? 'novo'}
-          className="registry-form"
-          ref={reveal}
-          onSubmit={(event) => {
-            void save(event);
+        <ActionScreen
+          title={<>{draft.id ? 'Editar paciente' : 'Cadastrar paciente'}</>}
+          onBack={() => {
+            setDraft(null);
           }}
+          busy={saving}
+          error={error}
+          notice={notice}
         >
-          <h3>{draft.id ? 'Editar paciente' : 'Cadastrar paciente'}</h3>
-          <div className="field-pair">
+          <form
+            key={draft.id ?? 'novo'}
+            className="registry-form"
+
+            onSubmit={(event) => {
+              void save(event);
+            }}
+          >
+            <div className="field-pair">
+              <label>
+                Nome do paciente
+                <input
+                  required
+                  maxLength={200}
+                  value={draft.name}
+                  onChange={(e) => setDraft({ ...draft, name: e.target.value })}
+                />
+              </label>
+              <label>
+                Espécie
+                <input
+                  required
+                  maxLength={80}
+                  placeholder="Ex.: canina"
+                  value={draft.species}
+                  onChange={(e) => setDraft({ ...draft, species: e.target.value })}
+                />
+              </label>
+            </div>
+            <div className="field-pair">
+              <label>
+                Raça
+                <input
+                  maxLength={120}
+                  value={draft.breed}
+                  onChange={(e) => setDraft({ ...draft, breed: e.target.value })}
+                />
+              </label>
+              <label>
+                Sexo
+                <select
+                  value={draft.sex}
+                  onChange={(e) => setDraft({ ...draft, sex: e.target.value as Patient['sex'] })}
+                >
+                  <option value="unknown">Não informado</option>
+                  <option value="male">Macho</option>
+                  <option value="female">Fêmea</option>
+                </select>
+              </label>
+            </div>
             <label>
-              Nome do paciente
-              <input
-                required
-                maxLength={200}
-                value={draft.name}
-                onChange={(e) => setDraft({ ...draft, name: e.target.value })}
-              />
-            </label>
-            <label>
-              Espécie
-              <input
-                required
-                maxLength={80}
-                placeholder="Ex.: canina"
-                value={draft.species}
-                onChange={(e) => setDraft({ ...draft, species: e.target.value })}
-              />
-            </label>
-          </div>
-          <div className="field-pair">
-            <label>
-              Raça
-              <input
-                maxLength={120}
-                value={draft.breed}
-                onChange={(e) => setDraft({ ...draft, breed: e.target.value })}
-              />
-            </label>
-            <label>
-              Sexo
+              Castrado
               <select
-                value={draft.sex}
-                onChange={(e) => setDraft({ ...draft, sex: e.target.value as Patient['sex'] })}
+                value={draft.neutered}
+                onChange={(e) =>
+                  setDraft({ ...draft, neutered: e.target.value as Draft['neutered'] })
+                }
               >
-                <option value="unknown">Não informado</option>
-                <option value="male">Macho</option>
-                <option value="female">Fêmea</option>
+                <option value="">Não informado</option>
+                <option value="yes">Sim</option>
+                <option value="no">Não</option>
               </select>
             </label>
-          </div>
-          <label>
-            Castrado
-            <select
-              value={draft.neutered}
-              onChange={(e) =>
-                setDraft({ ...draft, neutered: e.target.value as Draft['neutered'] })
-              }
-            >
-              <option value="">Não informado</option>
-              <option value="yes">Sim</option>
-              <option value="no">Não</option>
-            </select>
-          </label>
-          <div className="field-pair">
+            <div className="field-pair">
+              <label>
+                Data de nascimento
+                <input
+                  type="date"
+                  value={draft.birth_date}
+                  onChange={(e) =>
+                    setDraft({ ...draft, birth_date: e.target.value, estimated_age_months: '' })
+                  }
+                />
+              </label>
+              <label>
+                Idade estimada (meses)
+                <input
+                  type="number"
+                  min={0}
+                  step={1}
+                  disabled={Boolean(draft.birth_date)}
+                  value={draft.estimated_age_months}
+                  onChange={(e) => setDraft({ ...draft, estimated_age_months: e.target.value })}
+                />
+              </label>
+            </div>
+            <p className="muted">
+              Informe a data de nascimento ou a idade estimada, quando souber.
+            </p>
+            <div className="field-pair">
+              <label>
+                Pelagem
+                <input
+                  maxLength={120}
+                  value={draft.coat}
+                  onChange={(e) => setDraft({ ...draft, coat: e.target.value })}
+                />
+              </label>
+              <label>
+                Microchip
+                <input
+                  maxLength={50}
+                  value={draft.microchip}
+                  onChange={(e) => setDraft({ ...draft, microchip: e.target.value })}
+                />
+              </label>
+            </div>
             <label>
-              Data de nascimento
-              <input
-                type="date"
-                value={draft.birth_date}
-                onChange={(e) =>
-                  setDraft({ ...draft, birth_date: e.target.value, estimated_age_months: '' })
-                }
+              Observações cadastrais
+              <textarea
+                rows={3}
+                maxLength={2000}
+                value={draft.notes}
+                onChange={(e) => setDraft({ ...draft, notes: e.target.value })}
               />
             </label>
-            <label>
-              Idade estimada (meses)
-              <input
-                type="number"
-                min={0}
-                step={1}
-                disabled={Boolean(draft.birth_date)}
-                value={draft.estimated_age_months}
-                onChange={(e) => setDraft({ ...draft, estimated_age_months: e.target.value })}
-              />
-            </label>
-          </div>
-          <p className="muted">Informe a data de nascimento ou a idade estimada, quando souber.</p>
-          <div className="field-pair">
-            <label>
-              Pelagem
-              <input
-                maxLength={120}
-                value={draft.coat}
-                onChange={(e) => setDraft({ ...draft, coat: e.target.value })}
-              />
-            </label>
-            <label>
-              Microchip
-              <input
-                maxLength={50}
-                value={draft.microchip}
-                onChange={(e) => setDraft({ ...draft, microchip: e.target.value })}
-              />
-            </label>
-          </div>
-          <label>
-            Observações cadastrais
-            <textarea
-              rows={3}
-              maxLength={2000}
-              value={draft.notes}
-              onChange={(e) => setDraft({ ...draft, notes: e.target.value })}
-            />
-          </label>
-          <div className="actions">
-            <button disabled={saving}>{saving ? 'Salvando…' : 'Salvar paciente'}</button>
-            <button
-              type="button"
-              className="secondary"
-              disabled={saving}
-              onClick={() => setDraft(null)}
-            >
-              Cancelar edição
-            </button>
-          </div>
-        </form>
+            <div className="actions">
+              <button disabled={saving}>{saving ? 'Salvando…' : 'Salvar paciente'}</button>
+              <button
+                type="button"
+                className="secondary"
+                disabled={saving}
+                onClick={() => setDraft(null)}
+              >
+                Cancelar edição
+              </button>
+            </div>
+          </form>
+        </ActionScreen>
       )}
       {selected && (
         <PatientTutors
@@ -457,5 +471,13 @@ export function Patients({
         />
       )}
     </section>
+  );
+}
+
+export function Patients(props: ComponentProps<typeof PatientsContent>) {
+  return (
+    <ScreenArea>
+      <PatientsContent {...props} />
+    </ScreenArea>
   );
 }

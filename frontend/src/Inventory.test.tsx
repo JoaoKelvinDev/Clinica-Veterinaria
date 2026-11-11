@@ -100,6 +100,19 @@ function submit(quantity = '1,125') {
 }
 
 describe('Estoque', () => {
+  it('volta da movimentação ao produto e do produto à busca preservada', async () => {
+    mockApi();
+    render(<Inventory token="mock" user={user} />);
+    fireEvent.change(screen.getByLabelText('Buscar produto'), { target: { value: 'Insumo' } });
+    await open();
+    expect(screen.queryByRole('heading', { name: 'Estoque' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Registrar saída FEFO' }));
+    expect(screen.queryByRole('table', { name: 'Lotes e saldos' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Voltar' }));
+    expect(screen.getByRole('table', { name: 'Lotes e saldos' })).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'Voltar' }));
+    expect(screen.getByLabelText('Buscar produto')).toHaveValue('Insumo');
+  });
   it('mostra saldo disponível, vencido e alertas separados', async () => {
     mockApi();
     render(<Inventory token="mock" user={user} />);

@@ -1,9 +1,10 @@
+import type { ComponentProps } from 'react';
+import { ActionScreen, ScreenArea, ScreenFeedback } from './Screen';
 import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { apiRequest } from './api';
 import { errorMessage, parsePage, parseTutor } from './registry-api';
 import type { Page, Tutor } from './registry-api';
-import { reveal } from './reveal';
 
 interface Draft {
   id: string | null;
@@ -24,7 +25,7 @@ const empty: Draft = {
   source: '',
 };
 
-export function Tutors({ token, canWrite }: { token: string; canWrite: boolean }) {
+function TutorsContent({ token, canWrite }: { token: string; canWrite: boolean }) {
   const [page, setPage] = useState<Page<Tutor>>({ items: [], total: 0 });
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState('');
@@ -167,16 +168,8 @@ export function Tutors({ token, canWrite }: { token: string; canWrite: boolean }
         </label>
         <button className="secondary">Pesquisar</button>
       </form>
-      {error && (
-        <p role="alert" className="form-error">
-          {error}
-        </p>
-      )}
-      {notice && (
-        <p role="status" className="success-message">
-          {notice}
-        </p>
-      )}
+      <ScreenFeedback error={error} />
+      <ScreenFeedback notice={notice} />
       {loading ? (
         <p role="status">Carregando tutores…</p>
       ) : page.items.length === 0 ? (
@@ -266,116 +259,143 @@ export function Tutors({ token, canWrite }: { token: string; canWrite: boolean }
         </div>
       </div>
       {archive && (
-        <div className="confirmation" key={archive.id} ref={reveal}>
-          <p>
-            Arquivar <strong>{archive.name}</strong>? O cadastro e os vínculos serão preservados, e
-            a autorização de WhatsApp será revogada.
-          </p>
-          <div className="actions">
-            <button
-              disabled={saving}
-              onClick={() => {
-                void confirmArchive();
-              }}
-            >
-              Confirmar arquivamento
-            </button>
-            <button className="secondary" disabled={saving} onClick={() => setArchive(null)}>
-              Cancelar
-            </button>
+        <ActionScreen
+          title="Arquivar tutor"
+          onBack={() => {
+            setArchive(null);
+          }}
+          busy={saving}
+          error={error}
+          notice={notice}
+        >
+          <div className="confirmation" key={archive.id}>
+            <p>
+              Arquivar <strong>{archive.name}</strong>? O cadastro e os vínculos serão preservados,
+              e a autorização de WhatsApp será revogada.
+            </p>
+            <div className="actions">
+              <button
+                disabled={saving}
+                onClick={() => {
+                  void confirmArchive();
+                }}
+              >
+                Confirmar arquivamento
+              </button>
+              <button className="secondary" disabled={saving} onClick={() => setArchive(null)}>
+                Cancelar
+              </button>
+            </div>
           </div>
-        </div>
+        </ActionScreen>
       )}
       {draft && (
-        <form
-          key={draft.id ?? 'novo'}
-          className="registry-form"
-          ref={reveal}
-          onSubmit={(event) => {
-            void save(event);
+        <ActionScreen
+          title={<>{draft.id ? 'Editar tutor' : 'Cadastrar tutor'}</>}
+          onBack={() => {
+            setDraft(null);
           }}
+          busy={saving}
+          error={error}
+          notice={notice}
         >
-          <h3>{draft.id ? 'Editar tutor' : 'Cadastrar tutor'}</h3>
-          <div className="field-pair">
-            <label>
-              Nome do tutor
-              <input
-                required
-                maxLength={200}
-                value={draft.name}
-                onChange={(e) => setDraft({ ...draft, name: e.target.value })}
-              />
-            </label>
-            <label>
-              Telefone com DDD
-              <input
-                type="tel"
-                required={draft.granted}
-                maxLength={40}
-                value={draft.phone}
-                onChange={(e) =>
-                  setDraft({ ...draft, phone: e.target.value, granted: false, source: '' })
-                }
-              />
-            </label>
-          </div>
-          <label>
-            Documento (opcional)
-            <input
-              maxLength={30}
-              value={draft.document}
-              onChange={(e) => setDraft({ ...draft, document: e.target.value })}
-            />
-          </label>
-          <label>
-            Endereço (opcional)
-            <textarea
-              maxLength={500}
-              rows={2}
-              value={draft.address}
-              onChange={(e) => setDraft({ ...draft, address: e.target.value })}
-            />
-          </label>
-          <fieldset>
-            <legend>Comunicação por WhatsApp</legend>
-            <label className="checkbox">
-              <input
-                type="checkbox"
-                checked={draft.granted}
-                onChange={(e) => setDraft({ ...draft, granted: e.target.checked })}
-              />
-              O tutor autorizou receber mensagens
-            </label>
-            <p className="muted">
-              Registre apenas uma autorização recebida do tutor. Trocar o telefone exige nova
-              autorização.
-            </p>
-            {draft.granted && (
+          <form
+            key={draft.id ?? 'novo'}
+            className="registry-form"
+
+            onSubmit={(event) => {
+              void save(event);
+            }}
+          >
+            <div className="field-pair">
               <label>
-                Origem da autorização
+                Nome do tutor
                 <input
                   required
                   maxLength={200}
-                  placeholder="Ex.: autorização presencial"
-                  value={draft.source}
-                  onChange={(e) => setDraft({ ...draft, source: e.target.value })}
+                  value={draft.name}
+                  onChange={(e) => setDraft({ ...draft, name: e.target.value })}
                 />
               </label>
-            )}
-          </fieldset>
-          <div className="actions">
-            <button disabled={saving}>{saving ? 'Salvando…' : 'Salvar tutor'}</button>
-            <button
-              type="button"
-              className="secondary"
-              disabled={saving}
-              onClick={() => setDraft(null)}
-            >
-              Cancelar edição
-            </button>
-          </div>
-        </form>
+              <label>
+                Telefone com DDD
+                <input
+                  type="tel"
+                  required={draft.granted}
+                  maxLength={40}
+                  value={draft.phone}
+                  onChange={(e) =>
+                    setDraft({ ...draft, phone: e.target.value, granted: false, source: '' })
+                  }
+                />
+              </label>
+            </div>
+            <label>
+              Documento (opcional)
+              <input
+                maxLength={30}
+                value={draft.document}
+                onChange={(e) => setDraft({ ...draft, document: e.target.value })}
+              />
+            </label>
+            <label>
+              Endereço (opcional)
+              <textarea
+                maxLength={500}
+                rows={2}
+                value={draft.address}
+                onChange={(e) => setDraft({ ...draft, address: e.target.value })}
+              />
+            </label>
+            <fieldset>
+              <legend>Comunicação por WhatsApp</legend>
+              <label className="checkbox">
+                <input
+                  type="checkbox"
+                  checked={draft.granted}
+                  onChange={(e) => setDraft({ ...draft, granted: e.target.checked })}
+                />
+                O tutor autorizou receber mensagens
+              </label>
+              <p className="muted">
+                Registre apenas uma autorização recebida do tutor. Trocar o telefone exige nova
+                autorização.
+              </p>
+              {draft.granted && (
+                <label>
+                  Origem da autorização
+                  <input
+                    required
+                    maxLength={200}
+                    placeholder="Ex.: autorização presencial"
+                    value={draft.source}
+                    onChange={(e) => setDraft({ ...draft, source: e.target.value })}
+                  />
+                </label>
+              )}
+            </fieldset>
+            <div className="actions">
+              <button disabled={saving}>{saving ? 'Salvando…' : 'Salvar tutor'}</button>
+              <button
+                type="button"
+                className="secondary"
+                disabled={saving}
+                onClick={() => setDraft(null)}
+              >
+                Cancelar edição
+              </button>
+            </div>
+          </form>
+        </ActionScreen>
       )}
     </section>
+  );
+}
+
+export function Tutors(props: ComponentProps<typeof TutorsContent>) {
+  return (
+    <ScreenArea>
+      <TutorsContent {...props} />
+    </ScreenArea>
   );
 }

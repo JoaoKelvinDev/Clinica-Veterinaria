@@ -3,7 +3,7 @@
  * do veterinÃ¡rio (violeta). O carimbo Ã© o Ãºnico elemento expressivo; o resto fica quieto.
  */
 :root {
-  --bg: #f2f5f7;
+  --bg: #f3f6fb;
   --sheet: #ffffff;
   --ink: #1f2a33;
   --ink-soft: #4b5864;
@@ -715,6 +715,173 @@ tbody tr:hover {
   }
   .registry-form,
   .edit-form {
+    padding: 16px;
+  }
+}
+
+/* Todas as áreas compartilham a mesma superfície e a mesma navegação interna. */
+[hidden] {
+  display: none !important;
+}
+.shell {
+  background: var(--bg);
+}
+.sidebar {
+  background: linear-gradient(165deg, #fff 0%, #edf3f8 100%);
+  border-right: 1px solid var(--line);
+}
+.workspace-nav {
+  gap: 7px;
+}
+button.nav-item {
+  gap: 12px;
+  min-height: 46px;
+  border-radius: 10px;
+  border-left: 0;
+}
+button.nav-item[aria-current='page'] {
+  background: var(--blue);
+  color: white;
+  box-shadow: 0 5px 14px #24408e22;
+}
+.nav-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+main.workspace {
+  background: var(--bg);
+  border-left: 0;
+  padding: 30px clamp(20px, 3vw, 48px) 56px;
+}
+.screen-background,
+.area-view {
+  display: grid;
+  gap: 24px;
+  min-width: 0;
+}
+.screen-outlet:empty {
+  display: none;
+}
+.workspace .panel,
+.action-screen {
+  background: var(--sheet);
+  border: 1px solid #dde5ee;
+  border-radius: 18px;
+  padding: clamp(20px, 2.5vw, 32px);
+  box-shadow: 0 4px 22px #20385806;
+  min-width: 0;
+}
+.workspace .panel + .panel {
+  margin: 0;
+  padding-top: clamp(20px, 2.5vw, 32px);
+  border-top: 1px solid #dde5ee;
+}
+.action-screen {
+  display: grid;
+  gap: 24px;
+}
+.action-screen-header {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--line);
+}
+.action-screen-header h2 {
+  margin: 0;
+  overflow-wrap: anywhere;
+  scroll-margin-top: 24px;
+}
+.screen-eyebrow {
+  margin: 0 0 6px;
+  color: var(--green);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 11px;
+  font-weight: 700;
+}
+.back-button {
+  flex-shrink: 0;
+  gap: 8px;
+  min-height: 44px;
+}
+.action-screen-body {
+  min-width: 0;
+  display: grid;
+  gap: 20px;
+}
+.action-screen-body > .panel,
+.action-screen-body > .registry-form,
+.action-screen-body > .confirmation {
+  padding: 0;
+  margin: 0;
+  max-width: none;
+  border: 0;
+  box-shadow: none;
+  background: transparent;
+}
+.action-screen-body > form,
+.action-screen-body > .registry-form > form {
+  width: min(100%, 840px);
+}
+.module-card {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #f7fafc;
+}
+.module-card p {
+  margin: 6px 0 0;
+}
+.workspace button,
+.action-screen button {
+  min-height: 40px;
+}
+.table-scroll {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+thead th {
+  background: #f4f7fb;
+  color: var(--ink-soft);
+}
+.financial-summary {
+  padding: 20px;
+  border: 1px solid #cfe4df;
+  border-radius: 12px;
+  background: #f1f9f6;
+}
+.financial-summary dd {
+  font-size: 24px;
+  font-weight: 700;
+  color: #225c53;
+}
+.login-panel {
+  box-shadow: 0 14px 50px #24408e0c;
+}
+@media (max-width: 860px) {
+  main.workspace {
+    padding: 20px 12px 40px;
+  }
+  .workspace .panel,
+  .action-screen {
+    padding: 18px;
+    border-radius: 14px;
+  }
+  .action-screen-header {
+    gap: 12px;
+    align-items: flex-start;
+  }
+  .action-screen-header h2 {
+    font-size: 20px;
+  }
+  .module-card {
     padding: 16px;
   }
 }

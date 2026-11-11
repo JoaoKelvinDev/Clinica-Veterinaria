@@ -1,3 +1,5 @@
+import type { ComponentProps } from 'react';
+import { ActionScreen, ScreenArea, ScreenFeedback } from './Screen';
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { apiRequest } from './api';
@@ -14,12 +16,11 @@ import {
   uploadDocument,
 } from './records-api';
 import type { PatientDocument, TimelineEncounter } from './records-api';
-import { reveal } from './reveal';
 
 const today = () => new Date().toLocaleDateString('sv-SE', { timeZone: 'America/Fortaleza' });
 
 /** Laudos e documentos de outros profissionais: arquivo, resumo escrito ou os dois. */
-export function PatientDocuments({
+function PatientDocumentsContent({
   token,
   user,
   patientId,
@@ -127,138 +128,138 @@ export function PatientDocuments({
           </button>
         )}
       </div>
-      {error && (
-        <p className="form-error" role="alert">
-          {error}
-        </p>
-      )}
-      {notice && (
-        <p className="success-message" role="status">
-          {notice}
-        </p>
-      )}
+      <ScreenFeedback error={error} />
+      <ScreenFeedback notice={notice} />
       {form && (
-        <form
-          key={previous?.id ?? 'novo'}
-          className="registry-form"
-          ref={reveal}
-          onSubmit={(event) => {
-            void submit(event);
+        <ActionScreen
+          title={
+            <>
+              {previous ? `Corrigir documento (versão ${previous.version})` : 'Adicionar documento'}
+            </>
+          }
+          onBack={() => {
+            setForm(null);
           }}
+          busy={busy}
+          error={error}
+          notice={notice}
         >
-          <h3>
-            {previous ? `Corrigir documento (versão ${previous.version})` : 'Adicionar documento'}
-          </h3>
-          <p className="muted">
-            Anexe o arquivo, escreva um resumo ou faça os dois. PDF, JPG ou PNG de até 10 MB.
-          </p>
-          <label>
-            Tipo
-            <select name="kind" required defaultValue={previous?.kind ?? 'lab_report'}>
-              {Object.entries(documentKinds).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </select>
-          </label>
-          <div className="field-pair">
+          <form
+            key={previous?.id ?? 'novo'}
+            className="registry-form"
+
+            onSubmit={(event) => {
+              void submit(event);
+            }}
+          >
+            <p className="muted">
+              Anexe o arquivo, escreva um resumo ou faça os dois. PDF, JPG ou PNG de até 10 MB.
+            </p>
             <label>
-              Origem (profissional, clínica ou laboratório)
-              <input
-                name="origin_name"
-                required
-                maxLength={200}
-                defaultValue={previous?.origin_name}
-              />
-            </label>
-            <label>
-              CRMV da origem (opcional)
-              <input
-                name="origin_crmv"
-                maxLength={40}
-                placeholder="CRMV-PI 0000"
-                defaultValue={previous?.origin_crmv ?? ''}
-              />
-            </label>
-          </div>
-          <div className="field-pair">
-            <label>
-              Data do documento
-              <input
-                name="document_date"
-                type="date"
-                required
-                max={today()}
-                defaultValue={previous?.document_date}
-              />
-            </label>
-            <label>
-              Atendimento relacionado (opcional)
-              <select name="encounter_id" defaultValue={previous?.encounter_id ?? ''}>
-                <option value="">Nenhum</option>
-                {encounters.map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {displayDateTime(item.started_at)} com {item.veterinarian_name}
+              Tipo
+              <select name="kind" required defaultValue={previous?.kind ?? 'lab_report'}>
+                {Object.entries(documentKinds).map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
                   </option>
                 ))}
               </select>
             </label>
-          </div>
-          <label>
-            Arquivo (opcional)
-            <input
-              name="file"
-              type="file"
-              accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
-            />
-          </label>
-          {previous?.file_name && (
-            <label className="checkbox">
-              <input name="keep_file" type="checkbox" value="true" defaultChecked />
-              Manter o arquivo atual ({previous.file_name}) se nenhum novo for anexado
-            </label>
-          )}
-          <label>
-            Resumo (opcional)
-            <textarea
-              name="summary"
-              maxLength={20000}
-              placeholder="Ex.: hemograma de 10/10 sem alterações; vacinado em outra clínica…"
-              defaultValue={previous?.summary ?? ''}
-            />
-          </label>
-          {previous && (
+            <div className="field-pair">
+              <label>
+                Origem (profissional, clínica ou laboratório)
+                <input
+                  name="origin_name"
+                  required
+                  maxLength={200}
+                  defaultValue={previous?.origin_name}
+                />
+              </label>
+              <label>
+                CRMV da origem (opcional)
+                <input
+                  name="origin_crmv"
+                  maxLength={40}
+                  placeholder="CRMV-PI 0000"
+                  defaultValue={previous?.origin_crmv ?? ''}
+                />
+              </label>
+            </div>
+            <div className="field-pair">
+              <label>
+                Data do documento
+                <input
+                  name="document_date"
+                  type="date"
+                  required
+                  max={today()}
+                  defaultValue={previous?.document_date}
+                />
+              </label>
+              <label>
+                Atendimento relacionado (opcional)
+                <select name="encounter_id" defaultValue={previous?.encounter_id ?? ''}>
+                  <option value="">Nenhum</option>
+                  {encounters.map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {displayDateTime(item.started_at)} com {item.veterinarian_name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
             <label>
-              Motivo da correção
-              <input name="correction_reason" required minLength={3} maxLength={500} />
+              Arquivo (opcional)
+              <input
+                name="file"
+                type="file"
+                accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
+              />
             </label>
-          )}
-          <div className="actions">
-            <button disabled={busy}>{busy ? 'Enviando…' : 'Salvar documento'}</button>
-            <button type="button" className="secondary" onClick={() => setForm(null)}>
-              Cancelar
-            </button>
-          </div>
-        </form>
+            {previous?.file_name && (
+              <label className="checkbox">
+                <input name="keep_file" type="checkbox" value="true" defaultChecked />
+                Manter o arquivo atual ({previous.file_name}) se nenhum novo for anexado
+              </label>
+            )}
+            <label>
+              Resumo (opcional)
+              <textarea
+                name="summary"
+                maxLength={20000}
+                placeholder="Ex.: hemograma de 10/10 sem alterações; vacinado em outra clínica…"
+                defaultValue={previous?.summary ?? ''}
+              />
+            </label>
+            {previous && (
+              <label>
+                Motivo da correção
+                <input name="correction_reason" required minLength={3} maxLength={500} />
+              </label>
+            )}
+            <div className="actions">
+              <button disabled={busy}>{busy ? 'Enviando…' : 'Salvar documento'}</button>
+              <button type="button" className="secondary" onClick={() => setForm(null)}>
+                Cancelar
+              </button>
+            </div>
+          </form>
+        </ActionScreen>
       )}
       {history && (
-        <section
-          className="registry-form"
-          aria-labelledby="document-history-title"
-          key={history[0]?.root_id}
-          ref={reveal}
+        <ActionScreen
+          title="Versões do documento"
+          onBack={() => setHistory(null)}
+          busy={busy}
+          error={error}
+          notice={notice}
         >
-          <div className="section-heading">
-            <h3 id="document-history-title">Versões do documento</h3>
-            <button className="secondary" onClick={() => setHistory(null)}>
-              Fechar histórico
-            </button>
-          </div>
-          {history.map((item) => (
-            <DocumentView key={item.id} item={item} />
-          ))}
-        </section>
+          <section className="registry-form" key={history[0]?.root_id}>
+            {history.map((item) => (
+              <DocumentView key={item.id} item={item} />
+            ))}
+          </section>
+        </ActionScreen>
       )}
       {documents.length === 0 ? (
         <p>Nenhum documento anexado.</p>
@@ -322,5 +323,27 @@ function DocumentView({ item }: { item: PatientDocument }) {
         {item.correction_reason && `. Motivo da correção: ${item.correction_reason}`}
       </p>
     </div>
+  );
+}
+
+export function PatientDocuments(props: ComponentProps<typeof PatientDocumentsContent>) {
+  const [opened, setOpened] = useState(false);
+  return (
+    <ScreenArea>
+      <section className="module-card">
+        <div>
+          <h3>Documentos e laudos</h3>
+          <p className="muted">Exames, documentos externos e suas versões preservadas.</p>
+        </div>
+        <button className="secondary" onClick={() => setOpened(true)}>
+          Ver documentos e laudos
+        </button>
+      </section>
+      {opened && (
+        <ActionScreen title="Documentos e laudos do paciente" onBack={() => setOpened(false)}>
+          <PatientDocumentsContent {...props} />
+        </ActionScreen>
+      )}
+    </ScreenArea>
   );
 }

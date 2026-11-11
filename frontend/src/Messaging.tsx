@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import type { ComponentProps } from 'react';
+import { ActionScreen, ScreenArea, ScreenFeedback } from './Screen';
 import type { FormEvent } from 'react';
 import { apiRequest } from './api';
 import type { UserProfile } from './api';
@@ -14,7 +16,16 @@ import {
 } from './messaging-api';
 import type { MessageItem, MessagingOverview, ReminderItem } from './messaging-api';
 
-export function Messaging({ token, user }: { token: string; user: UserProfile }) {
+export function Messaging(props: ComponentProps<typeof MessagingContent>) {
+  return (
+    <ScreenArea>
+      <MessagingContent {...props} />
+    </ScreenArea>
+  );
+}
+
+function MessagingContent({ token, user }: { token: string; user: UserProfile }) {
+  const [simulating, setSimulating] = useState(false);
   const canAct = user.role === 'admin' || user.role === 'reception';
   const [overview, setOverview] = useState<MessagingOverview | null>(null);
   const [revision, setRevision] = useState(0);
@@ -65,6 +76,7 @@ export function Messaging({ token, user }: { token: string; user: UserProfile })
         ),
       );
       form.reset();
+      setSimulating(false);
       if (message.needs_attention) return 'Resposta registrada em "Precisa de atenção".';
       return `Resposta processada: ${message.intent ? intents[message.intent] : 'registrada'}.`;
     });
@@ -103,16 +115,7 @@ export function Messaging({ token, user }: { token: string; user: UserProfile })
           ficam registradas abaixo como se tivessem sido enviadas.
         </p>
       )}
-      {error && (
-        <p className="form-error" role="alert">
-          {error}
-        </p>
-      )}
-      {notice && (
-        <p className="success-message" role="status">
-          {notice}
-        </p>
-      )}
+      <ScreenFeedback error={error} notice={notice} />
       {!overview ? (
         !error && <p role="status">Carregando mensagens…</p>
       ) : (
@@ -145,26 +148,37 @@ export function Messaging({ token, user }: { token: string; user: UserProfile })
           )}
 
           {canAct && overview.simulated && (
-            <form className="registry-form" onSubmit={simulate}>
-              <h3>Simular resposta do tutor (MOCK)</h3>
-              <p className="muted">
-                Respostas reconhecidas: CONFIRMO, CANCELAR e SAIR. As demais vão para "Precisa de
-                atenção".
-              </p>
-              <div className="field-pair">
-                <label>
-                  Telefone do tutor
-                  <input name="phone" type="tel" required placeholder="(86) 99999-0000" />
-                </label>
-                <label>
-                  Resposta
-                  <input name="body" required maxLength={1000} placeholder="Confirmo" />
-                </label>
-              </div>
-              <div>
-                <button disabled={busy}>Registrar resposta</button>
-              </div>
-            </form>
+            <button className="secondary" onClick={() => setSimulating(true)}>
+              Simular resposta do tutor (MOCK)
+            </button>
+          )}
+          {canAct && overview.simulated && simulating && (
+            <ActionScreen
+              title="Simular resposta do tutor (MOCK)"
+              onBack={() => setSimulating(false)}
+              busy={busy}
+              error={error}
+            >
+              <form className="registry-form" onSubmit={simulate}>
+                <p className="muted">
+                  Respostas reconhecidas: CONFIRMO, CANCELAR e SAIR. As demais vão para "Precisa de
+                  atenção".
+                </p>
+                <div className="field-pair">
+                  <label>
+                    Telefone do tutor
+                    <input name="phone" type="tel" required placeholder="(86) 99999-0000" />
+                  </label>
+                  <label>
+                    Resposta
+                    <input name="body" required maxLength={1000} placeholder="Confirmo" />
+                  </label>
+                </div>
+                <div>
+                  <button disabled={busy}>Registrar resposta</button>
+                </div>
+              </form>
+            </ActionScreen>
           )}
 
           <h3>Próximos lembretes</h3>
