@@ -168,6 +168,18 @@ Lançamentos não são editados nem apagados. Para corrigir, o administrador esc
 
 Orçamentos aprovados não geram lançamentos automaticamente. Não há contas futuras a pagar/receber, parcelamento, conciliação, saldo inicial, abertura/fechamento de caixa, pagamento online ou emissão fiscal. Decisões na [ADR 0013](docs/decisions/0013-etapa-10-financeiro.md); testes, comandos e limites em [Verificação da Etapa 10](docs/etapa-10-verificacao.md).
 
+## Navegação e interface — Etapa 11
+
+Todas as áreas usam o fluxo **lista → tela da ação ou detalhe → Voltar**, dentro da aplicação, sem recarregar a página. O botão **← Voltar** fica ao lado do título. Enquanto a ação está aberta, a tela anterior fica preservada: ao retornar, a busca, os filtros, a página e a posição da lista continuam disponíveis.
+
+Isso vale para cadastros, agenda, prontuário, documentos, PDFs, rascunhos, orçamentos, estoque, financeiro, simulação de mensagens e equipe. A apresentação é compartilhada entre recepção, veterinários, auxiliares e administradores; as ações disponíveis continuam respeitando as permissões de cada papel.
+
+No Financeiro, use **Novo lançamento** ou **Novo recebimento** para abrir o formulário. **Estornar** abre sua própria tela com motivo e confirmação. Em Estoque, é possível abrir um produto e depois uma movimentação; cada Voltar retorna um nível. No prontuário, documentos, histórico de versões, exportações e formulários também seguem esse padrão.
+
+Erros ficam junto da ação e preservam os dados preenchidos. Voltar/cancelar não grava edições. O botão Voltar da ação fica indisponível durante a gravação. A navegação usa o botão do produto; não foram adicionados links diretos ou histórico de ações nos botões Voltar/Avançar do navegador. Sair, recarregar ou trocar de área pelo menu pode iniciar outro contexto.
+
+Menu, cartões, tabelas, botões e formulários compartilham estilos e regras responsivas. A inspeção visual manual da nova interface permanece pendente nesta entrega; comportamento e permissões foram verificados por testes automatizados. Decisões na [ADR 0014](docs/decisions/0014-etapa-11-navegacao-e-interface.md); resultados em [Verificação da Etapa 11](docs/etapa-11-verificacao.md).
+
 ## Autenticação e isolamento
 
 O frontend autentica pelo cliente oficial Supabase e envia o token à API. A API verifica a identidade com o servidor Auth e consulta o perfil ativo, sua clínica e papel no banco em cada requisição. Não aceita clínica ou papel informados pelo cliente para autorizar acesso.

@@ -436,7 +436,7 @@ Se um comando de teste não puder ser executado no ambiente, informe isso explic
 
 ## 11. Comandos do projeto
 
-Comandos atuais após a Etapa 10. Consulte `README.md` e os documentos `docs/etapa-N-verificacao.md` de cada etapa. As escolhas aprovadas de autenticação, ambiente gratuito local e isolamento estão em `docs/decisions/0003-etapa-1-auth-e-isolamento.md`; os cadastros estão em `docs/decisions/0004-etapa-2-tutores-e-pacientes.md`; a agenda está em `docs/decisions/0005-etapa-3-agenda-e-atendimentos.md`; o prontuário e suas fontes normativas estão em `docs/decisions/0006-etapa-4-prontuario.md`; documentos e laudos, em `docs/decisions/0007-etapa-4b-documentos.md`; lembretes e mensagens simuladas, em `docs/decisions/0008-etapa-5-lembretes-e-mensagens.md`; scribe simulado, em `docs/decisions/0009-etapa-6-scribe-simulado.md`; orçamentos, em `docs/decisions/0010-etapa-7-orcamentos.md`; estoque, em `docs/decisions/0011-etapa-8-estoque.md`; exportação em PDF, em `docs/decisions/0012-etapa-9-prontuario-pdf.md`; financeiro básico manual, em `docs/decisions/0013-etapa-10-financeiro.md`.
+Comandos atuais após a Etapa 11. Consulte `README.md` e os documentos `docs/etapa-N-verificacao.md` de cada etapa. As escolhas aprovadas de autenticação, ambiente gratuito local e isolamento estão em `docs/decisions/0003-etapa-1-auth-e-isolamento.md`; os cadastros estão em `docs/decisions/0004-etapa-2-tutores-e-pacientes.md`; a agenda está em `docs/decisions/0005-etapa-3-agenda-e-atendimentos.md`; o prontuário e suas fontes normativas estão em `docs/decisions/0006-etapa-4-prontuario.md`; documentos e laudos, em `docs/decisions/0007-etapa-4b-documentos.md`; lembretes e mensagens simuladas, em `docs/decisions/0008-etapa-5-lembretes-e-mensagens.md`; scribe simulado, em `docs/decisions/0009-etapa-6-scribe-simulado.md`; orçamentos, em `docs/decisions/0010-etapa-7-orcamentos.md`; estoque, em `docs/decisions/0011-etapa-8-estoque.md`; exportação em PDF, em `docs/decisions/0012-etapa-9-prontuario-pdf.md`; financeiro básico manual, em `docs/decisions/0013-etapa-10-financeiro.md`; navegação e interface compartilhadas, em `docs/decisions/0014-etapa-11-navegacao-e-interface.md`.
 
 Pré-requisitos: Docker Desktop com containers Linux, Node.js 22.20+ da linha 22, npm e uv. O Supabase local não exige login na conta da nuvem. Nenhum projeto hospedado foi criado.
 
@@ -591,6 +591,13 @@ Plano aprovado e implementação verificada em 2026-11-10: recebimentos e despes
 
 - **Escopo:** registros manuais, vínculos opcionais com tutor/paciente, consulta por período e correção por estorno e novo lançamento.
 - **Fora do escopo:** contas futuras, parcelas, saldo inicial, abertura/fechamento de caixa, pagamentos, conciliação, fiscal e geração automática por orçamento/estoque.
+
+### Etapa 11: Navegação interna e interface compartilhadas
+
+Plano global aprovado e implementação automatizada verificada em 2026-11-11: telas próprias para ações e detalhes, botão Voltar junto ao título, preservação da lista no retorno, navegação por níveis e identidade visual comum a todas as áreas e perfis. Evidências em `docs/etapa-11-verificacao.md`; decisões em `docs/decisions/0014-etapa-11-navegacao-e-interface.md`. Inspeção visual em navegador real permanece pendente por indisponibilidade da ferramenta na sessão.
+
+- **Escopo:** interface de todos os módulos existentes, estilos responsivos compartilhados, foco e testes de navegação; permissões anteriores preservadas.
+- **Fora do escopo:** novas regras de negócio, backend/banco, dependências, URLs individuais, links diretos e histórico Voltar/Avançar do navegador.
 
 ### Etapas futuras (sem planejamento ainda)
 
