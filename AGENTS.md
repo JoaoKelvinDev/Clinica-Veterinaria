@@ -436,9 +436,9 @@ Se um comando de teste não puder ser executado no ambiente, informe isso explic
 
 ## 11. Comandos do projeto
 
-Comandos atuais após a Etapa 11. Consulte `README.md` e os documentos `docs/etapa-N-verificacao.md` de cada etapa. As escolhas aprovadas de autenticação, ambiente gratuito local e isolamento estão em `docs/decisions/0003-etapa-1-auth-e-isolamento.md`; os cadastros estão em `docs/decisions/0004-etapa-2-tutores-e-pacientes.md`; a agenda está em `docs/decisions/0005-etapa-3-agenda-e-atendimentos.md`; o prontuário e suas fontes normativas estão em `docs/decisions/0006-etapa-4-prontuario.md`; documentos e laudos, em `docs/decisions/0007-etapa-4b-documentos.md`; lembretes e mensagens simuladas, em `docs/decisions/0008-etapa-5-lembretes-e-mensagens.md`; scribe simulado, em `docs/decisions/0009-etapa-6-scribe-simulado.md`; orçamentos, em `docs/decisions/0010-etapa-7-orcamentos.md`; estoque, em `docs/decisions/0011-etapa-8-estoque.md`; exportação em PDF, em `docs/decisions/0012-etapa-9-prontuario-pdf.md`; financeiro básico manual, em `docs/decisions/0013-etapa-10-financeiro.md`; navegação e interface compartilhadas, em `docs/decisions/0014-etapa-11-navegacao-e-interface.md`.
+Comandos atuais após a Etapa 12. Consulte `README.md` e os documentos `docs/etapa-N-verificacao.md` de cada etapa. As escolhas aprovadas de autenticação, ambiente gratuito local e isolamento estão em `docs/decisions/0003-etapa-1-auth-e-isolamento.md`; os cadastros estão em `docs/decisions/0004-etapa-2-tutores-e-pacientes.md`; a agenda está em `docs/decisions/0005-etapa-3-agenda-e-atendimentos.md`; o prontuário e suas fontes normativas estão em `docs/decisions/0006-etapa-4-prontuario.md`; documentos e laudos, em `docs/decisions/0007-etapa-4b-documentos.md`; lembretes e mensagens simuladas, em `docs/decisions/0008-etapa-5-lembretes-e-mensagens.md`; scribe simulado, em `docs/decisions/0009-etapa-6-scribe-simulado.md`; orçamentos, em `docs/decisions/0010-etapa-7-orcamentos.md`; estoque, em `docs/decisions/0011-etapa-8-estoque.md`; exportação em PDF, em `docs/decisions/0012-etapa-9-prontuario-pdf.md`; financeiro básico manual, em `docs/decisions/0013-etapa-10-financeiro.md`; navegação e interface compartilhadas, em `docs/decisions/0014-etapa-11-navegacao-e-interface.md`; visão geral da clínica, em `docs/decisions/0015-etapa-12-visao-geral.md`.
 
-Pré-requisitos: Docker Desktop com containers Linux, Node.js 22.20+ da linha 22, npm e uv. O Supabase local não exige login na conta da nuvem. Nenhum projeto hospedado foi criado.
+Pré-requisitos: Docker Desktop com containers Linux, Node.js 22.20+ da linha 22, npm e uv. O Supabase local não exige login na conta da nuvem. Separadamente, o projeto hospedado gratuito `vetsys-demo` foi criado por autorização explícita na Etapa 13, na organização `jkelvindev`, sem alterar os projetos anteriores. A demonstração foi publicada em `https://vetsys-demo.vercel.app`, com verificações HTTP e de arquivos; inspeção visual pendente. Ver `docs/etapa-13-demonstracao-status.md`.
 
 Na raiz:
 
@@ -598,6 +598,22 @@ Plano global aprovado e implementação automatizada verificada em 2026-11-11: t
 
 - **Escopo:** interface de todos os módulos existentes, estilos responsivos compartilhados, foco e testes de navegação; permissões anteriores preservadas.
 - **Fora do escopo:** novas regras de negócio, backend/banco, dependências, URLs individuais, links diretos e histórico Voltar/Avançar do navegador.
+
+### Etapa 12: Visão geral da clínica
+
+Plano aprovado e implementação automatizada verificada em 2026-11-11: nova tela inicial com agenda do dia, atendimentos em aberto, mensagens aguardando atenção, alertas de estoque e financeiro do mês conforme o papel. Totais completos, leitura consistente e datas em Fortaleza. Evidências em `docs/etapa-12-verificacao.md`; decisões em `docs/decisions/0015-etapa-12-visao-geral.md`. Inspeção visual em navegador real permanece pendente por indisponibilidade da ferramenta.
+
+- **Escopo:** agregação de leitura pelos services existentes, consultas sem paginação, atalhos internos e atualização manual; administrador com financeiro completo, recepção com recebimentos e veterinário/auxiliar sem consulta financeira.
+- **Fora do escopo:** novas tabelas, dependências, integrações reais, relatórios exportáveis, atualização em tempo real, filtros novos e ações de gravação nos cartões.
+
+### Etapa 13: Demonstração hospedada em Vercel e Supabase (publicada; revisão visual pendente)
+
+O responsável autorizou a demonstração Vercel + Supabase, escolheu a organização `jkelvindev` e confirmou US$ 0/mês, sem recursos pagos. O Supabase `vetsys-demo` foi criado com as migrações Alembic, RLS forçada, papel restrito, TLS, Auth sem cadastro público e Storage privado. Há três contas de veterinário explicitamente TESTE e dados fictícios; os rascunhos não foram aprovados.
+
+- **Escopo:** preparar e publicar interface/API, configurar o banco hospedado, acessos e dados demonstrativos, respeitando os papéis anteriores e preservando o ambiente local.
+- **Publicação verificada:** interface/API na equipe Vercel `jkelvin`, proxy `/api`, URL Auth, três logins, permissões, isolamento RLS e arquivos PDF/ZIP. Produção liberada de SSO Vercel com autorização específica; previews protegidos e login Supabase mantido. Código local publicado sem commit/push.
+- **Pendências e limites:** inspeção visual sem navegador disponível; worker contínuo não implantado, somente disparo manual MOCK; uploads de 4 MiB e ZIP de aproximadamente 6,4 MB verificados, sem validação de pacotes de 100 MiB. Ver `docs/etapa-13-demonstracao-status.md`.
+- **Limites:** não contratar recursos pagos; pedir autorização antes de baixar ferramentas novas; não enviar dados reais; não fazer commit/push sem instrução explícita.
 
 ### Etapas futuras (sem planejamento ainda)
 

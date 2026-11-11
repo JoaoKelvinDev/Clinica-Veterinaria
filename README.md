@@ -1,10 +1,20 @@
 # Sistema Veterinário
 
-Aplicação para clínicas veterinárias pequenas no Brasil. Etapas implementadas: fundação; clínica, usuários e autenticação; tutores e animais; agenda e atendimentos; prontuário; documentos e laudos; lembretes e mensagens com provedor simulado; scribe com provedores simulados; orçamentos; estoque; exportação do prontuário em PDF; financeiro básico manual. As integrações e funções futuras serão desenvolvidas em etapas próprias.
+Aplicação para clínicas veterinárias pequenas no Brasil. Etapas implementadas: fundação; clínica, usuários e autenticação; tutores e animais; agenda e atendimentos; prontuário; documentos e laudos; lembretes e mensagens com provedor simulado; scribe com provedores simulados; orçamentos; estoque; exportação do prontuário em PDF; financeiro básico manual; navegação compartilhada; visão geral da clínica. As integrações e funções futuras serão desenvolvidas em etapas próprias.
+
+## Visão geral da clínica — Etapa 12
+
+Após entrar, a tela inicial **Visão geral** reúne a agenda do dia, os atendimentos em aberto (inclusive de dias anteriores), as mensagens aguardando atenção e os alertas de estoque. Administradores veem também recebimentos, despesas e diferença do mês; recepção vê somente recebimentos; veterinários e auxiliares não recebem dados financeiros.
+
+As contagens consideram todos os registros elegíveis da clínica, independentemente da paginação. Dia e mês seguem `America/Fortaleza`. O financeiro exclui estornados na data financeira original; a diferença não representa lucro contábil nem saldo bancário. Os alertas de validade incluem apenas lotes com saldo positivo de produtos ativos, com janela de hoje até 30 dias.
+
+Use os botões dos cartões para abrir cada área sem recarregar a página. **Agenda** continua no menu. Os resumos carregam ao abrir a Visão geral e pelo botão **Atualizar visão geral**; não há atualização automática. Em caso de falha, a tela mostra um erro e permite tentar novamente, sem apresentar totais antigos como atuais. Mensagens continuam em modo MOCK.
+
+Decisões na [ADR 0015](docs/decisions/0015-etapa-12-visao-geral.md); verificações e pendência de revisão visual em [Verificação da Etapa 12](docs/etapa-12-verificacao.md).
 
 ## Ambiente gratuito e local
 
-PostgreSQL e Supabase Auth executam no Docker, neste computador. Nenhum projeto hospedado, plano pago, envio de e-mail ou implantação é configurado. Os projetos existentes da conta Supabase não são alterados. Não é preciso autenticar a CLI na conta da nuvem.
+No desenvolvimento local, PostgreSQL e Supabase Auth executam no Docker, neste computador. Os comandos desta seção não criam projetos hospedados nem contratam planos pagos. Separadamente, a demonstração com dados fictícios foi autorizada e publicada na Vercel com o Supabase gratuito `vetsys-demo`. Os projetos anteriores da conta Supabase foram preservados. Não é preciso autenticar a CLI na conta da nuvem para executar o ambiente local.
 
 Pré-requisitos: Docker Desktop iniciado com containers Linux, Node.js 22.20+ da linha 22, npm e [uv](https://docs.astral.sh/uv/). O uv disponibiliza Python 3.12 e instala as dependências fixadas em `backend/uv.lock`.
 
@@ -35,6 +45,16 @@ Para parar, sem apagar dados:
 docker compose down
 npm run db:stop
 ```
+
+## Demonstração hospedada — Etapa 13
+
+O Supabase de demonstração já possui banco isolado, Auth e Storage privado, com contas de avaliação para BIBI, MICAELLY e MARIA CAROLLINE. Essas contas têm o papel de veterinário com identificações TESTE, somente para dados fictícios. Os rascunhos clínicos de exemplo permanecem pendentes de revisão.
+
+Acesse **https://vetsys-demo.vercel.app** com o login individual fornecido pelo responsável. A interface React e a API Python são dois projetos Vercel do mesmo sistema; o proxy `/api` conecta ambos. Não é necessário login na Vercel para acessar a produção. Os três logins, permissões, isolamento RLS, anexos e PDF/ZIP foram verificados pelo domínio público. A inspeção visual em navegador permanece pendente.
+
+O modo `VERCEL=1` configura a API serverless; `VITE_DEMO_MODE=true` identifica a demonstração e limita anexos pela interface a 4 MiB. No ambiente local permanecem 10 MiB. O worker contínuo não foi implantado: lembretes usam o disparo manual MOCK existente. Downloads de 4 MiB e ZIP de aproximadamente 6,4 MB passaram; pacotes de 100 MiB não foram validados. Os arquivos individuais de acesso em `.cache` já contêm o link público; as versões locais anteriores foram preservadas.
+
+Estado, verificações, limites e próximos passos em [Etapa 13 — Demonstração](docs/etapa-13-demonstracao-status.md). Credenciais continuam exclusivamente em arquivos ignorados pelo Git.
 
 ## Primeiro administrador e novos usuários
 
@@ -257,11 +277,11 @@ uv run --env-file ../.env --frozen alembic upgrade head
 
 Não execute downgrade no banco com dados que precisam ser preservados: o downgrade inicial remove as tabelas desta etapa. O teste de reversibilidade usa somente banco temporário isolado.
 
-`npm run setup` gera `.env` e `frontend/.env.local`. Não versionar esses arquivos. A API em execução recebe somente a conexão restrita, a URL de Auth e a chave publicável. A conexão administrativa e a chave secreta ficam exclusivas dos comandos locais de configuração/provisionamento. O frontend recebe apenas URL e chave publicável. Os arquivos `.env.example` não contêm credenciais.
+`npm run setup` gera `.env` e `frontend/.env.local`. Não versionar esses arquivos. A API em execução recebe a conexão restrita, a URL de Auth, a chave publicável e a chave secreta necessária ao Storage privado. A conexão administrativa fica exclusiva dos comandos de configuração/provisionamento. O frontend recebe apenas URL e chave publicável. Os arquivos `.env.example` não contêm credenciais.
 
 ## Limitações
 
-Ambiente exclusivo de desenvolvimento local, sem HTTPS e sem deploy. Recuperação de senha, convites, edição de e-mail/senha pela interface e múltiplas clínicas por usuário ficam fora desta entrega. A migração para projeto hospedado depende de decisão futura e confirmação de custo zero ou nova autorização.
+O ambiente local continua independente da demonstração hospedada da Etapa 13, que usa HTTPS na Vercel e Supabase remoto. Recuperação de senha, convites, edição de e-mail/senha pela interface e múltiplas clínicas por usuário permanecem fora desta entrega. Não houve contratação de recursos pagos.
 
 Os resultados executados e as limitações de cada etapa estão em `docs/etapa-N-verificacao.md`, incluindo `docs/etapa-9-verificacao.md`. As decisões aprovadas estão em `docs/decisions/`. O aviso de depreciação HTTPX/TestClient continua documentado; os testes passam sem ocultá-lo.
 
