@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { App } from './App';
 import type { AuthGateway, AuthSession } from './auth';
@@ -23,7 +23,7 @@ function gateway(initial: AuthSession | null = null) {
     getSession: vi.fn().mockResolvedValue(initial),
     signIn: vi.fn().mockResolvedValue(session),
     signOut: vi.fn().mockResolvedValue(undefined),
-    subscribe: vi.fn(() => vi.fn()),
+    subscribe: vi.fn<AuthGateway['subscribe']>(() => vi.fn()),
   } satisfies AuthGateway;
 }
 function mockApi(user = admin) {
@@ -88,6 +88,80 @@ describe('Autenticação e permissões', () => {
     expect(screen.queryByRole('heading', { name: clinic.name })).not.toBeInTheDocument();
   });
 
+  it('mostra e oculta a senha sem alterar seu valor ou enviar o formulário', async () => {
+    const auth = gateway();
+    mockApi();
+    render(<App auth={auth} />);
+    const password = await screen.findByLabelText('Senha');
+    fireEvent.change(password, { target: { value: 'fictitious-password' } });
+    expect(password).toHaveAttribute('type', 'password');
+    fireEvent.click(screen.getByRole('button', { name: 'Mostrar senha' }));
+    expect(password).toHaveAttribute('type', 'text');
+    expect(password).toHaveValue('fictitious-password');
+    expect(screen.getByRole('button', { name: 'Ocultar senha' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Ocultar senha' }));
+    expect(password).toHaveAttribute('type', 'password');
+    expect(password).toHaveValue('fictitious-password');
+    expect(auth.signIn).not.toHaveBeenCalled();
+  });
+
+  it('bloqueia novo envio enquanto autentica e abre o dashboard ao concluir', async () => {
+    const auth = gateway();
+    let resolveLogin!: (value: AuthSession) => void;
+    auth.signIn.mockReturnValue(
+      new Promise<AuthSession>((resolve) => {
+        resolveLogin = resolve;
+      }),
+    );
+    mockApi();
+    render(<App auth={auth} />);
+    await enter();
+    expect(screen.getByRole('button', { name: 'Entrando…' })).toBeDisabled();
+    expect(screen.getByLabelText('E-mail')).toBeDisabled();
+    expect(screen.getByLabelText('Senha')).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Mostrar senha' })).toBeDisabled();
+    expect(auth.signIn).toHaveBeenCalledOnce();
+    await act(async () => resolveLogin(session));
+    expect(await screen.findByRole('heading', { name: 'Visão geral' })).toBeVisible();
+    expect(screen.queryByRole('heading', { name: 'Entre na sua clínica' })).not.toBeInTheDocument();
+  });
+
+  it('aguarda recuperar a sessão existente e entra sem solicitar credenciais novamente', async () => {
+    const auth = gateway();
+    let resolveSession!: (value: AuthSession) => void;
+    auth.getSession.mockReturnValue(
+      new Promise<AuthSession>((resolve) => {
+        resolveSession = resolve;
+      }),
+    );
+    mockApi();
+    render(<App auth={auth} />);
+    expect(screen.getByRole('heading', { name: 'Preparando seu acesso' })).toBeVisible();
+    expect(screen.queryByRole('button', { name: 'Entrar' })).not.toBeInTheDocument();
+    await act(async () => resolveSession(session));
+    expect(await screen.findByRole('heading', { name: 'Visão geral' })).toBeVisible();
+    expect(auth.signIn).not.toHaveBeenCalled();
+  });
+
+  it('retorna à nova tela de login quando a sessão expira', async () => {
+    const auth = gateway(session);
+    let notify!: (value: AuthSession | null) => void;
+    auth.subscribe.mockImplementation((callback) => {
+      notify = callback;
+      return vi.fn();
+    });
+    mockApi();
+    render(<App auth={auth} />);
+    await screen.findByRole('heading', { name: 'Visão geral' });
+    await act(async () => notify(null));
+    expect(await screen.findByRole('heading', { name: 'Entre na sua clínica' })).toBeVisible();
+    expect(screen.queryByRole('heading', { name: clinic.name })).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Senha')).toHaveValue('');
+  });
+
   it('não disponibiliza administração para recepção', async () => {
     mockApi(reception);
     render(<App auth={gateway(session)} />);
@@ -114,9 +188,13 @@ describe('Autenticação e permissões', () => {
           ),
       ),
     );
-    render(<App auth={gateway(session)} />);
+    const auth = gateway(session);
+    render(<App auth={auth} />);
     expect(await screen.findByRole('alert')).toHaveTextContent('Usuário sem acesso ativo.');
     expect(screen.queryByRole('heading', { name: clinic.name })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Sair' }));
+    expect(await screen.findByRole('heading', { name: 'Entre na sua clínica' })).toBeVisible();
+    expect(auth.signOut).toHaveBeenCalledOnce();
   });
 
   it('permite ao administrador desativar um usuário', async () => {
