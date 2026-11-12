@@ -11,14 +11,22 @@ nomes, papéis, situação e CRMVs TESTE permaneceram iguais. Senhas e dados de
 login não foram alterados, e nenhuma identidade Auth foi criada ou excluída.
 
 Antes desta execução já havia somente três identidades Auth: administrador,
-BIBI e MICAELLY. MARIA CAROLLINE permanecia no cadastro da aplicação, mas sem
+BIBI e MICAELLY. Um perfil anterior permanecia no cadastro da aplicação, mas sem
 identidade de login. O responsável escolheu **manter sem login** e ajustar a
 distribuição dos exemplos. Os acessos disponíveis de BIBI e MICAELLY foram
 conferidos, incluindo o bloqueio de administração e financeiro.
 
-O arquivo privado de acesso de Maria recebeu aviso de indisponibilidade para
+O arquivo privado de acesso do perfil anterior recebeu aviso de indisponibilidade para
 não ser distribuído como login ativo. As informações anteriores foram guardadas
 em `.cache/demo-profissional-v1/`; nenhuma credencial foi publicada no repositório.
+
+Após a conferência manual inicial em 12/11/2026, o responsável pediu manter
+somente BIBI e MICAELLY na avaliação. O perfil anterior foi desativado pela API,
+e seu acesso foi retirado dos materiais privados atuais. As duas avaliadoras
+são agora as únicas veterinárias na lista ativa; autoria e vínculos históricos
+continuam preservados. A verificação HTTP adicional passou em 18 checagens;
+os hashes das linhas clínicas permaneceram iguais. Detalhes em
+[Verificação dos perfis](perfis-avaliadoras-verificacao.md).
 
 ## Dados antigos
 
@@ -28,13 +36,13 @@ em `.cache/demo-profissional-v1/`; nenhuma credencial foi publicada no repositó
 | 3 produtos iniciais sem saldo           | Arquivados logicamente                                                 |
 | 3 rascunhos MOCK antigos                | Descartados pelo fluxo autorizado do sistema                           |
 | Atendimentos antigos de BIBI e MICAELLY | Concluídos pelos respectivos acessos                                   |
-| Atendimento antigo de MARIA CAROLLINE   | Preservado em aberto, com paciente arquivado                           |
+| Atendimento do perfil anterior          | Preservado em aberto, com paciente arquivado                           |
 | 3 pesos antigos                         | Preservados, com os mesmos IDs                                         |
 | 3 documentos e 2 exportações PDF        | Preservados; download autenticado e SHA-256 idênticos à cópia anterior |
 | Auditoria                               | Preservada e ampliada pelas novas leituras e operações                 |
 
 Não houve exclusão física de prontuário, documentos, PDFs, movimentações ou
-históricos. O atendimento de Maria exige o veterinário responsável para concluir;
+históricos. O atendimento do perfil anterior exige o veterinário responsável para concluir;
 essa regra não foi contornada.
 
 ## Novo conjunto ativo
@@ -125,7 +133,7 @@ senhas vazadas desativada. Não houve alteração de plano ou contratação.
 
 Atualize as listas na aplicação hospedada ou entre novamente como BIBI/MICAELLY.
 Na agenda, consulte 12–14/11/2026. No dashboard, o contador de atendimentos abertos
-inclui **3 novos e 1 histórico de Maria**, totalizando 4. O financeiro exige o
+inclui **3 novos e 1 histórico com paciente arquivado**, totalizando 4. O financeiro exige o
 acesso administrativo; continua oculto e bloqueado para as veterinárias.
 
 Nenhuma função do produto, dependência, schema, política ou configuração de

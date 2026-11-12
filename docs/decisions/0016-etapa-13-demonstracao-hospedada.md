@@ -4,7 +4,9 @@ Data: 2026-11-11. Status: aprovado e publicado; inspeção visual pendente.
 
 ## Contexto
 
-O responsável autorizou publicar a demonstração do código atual para BIBI, MICAELLY e MARIA CAROLLINE usando Vercel e Supabase, escolheu a organização Supabase `jkelvindev` e limitou o custo a US$ 0/mês, sem recursos pagos. O ambiente local e os projetos anteriores devem ser preservados. Commit e push ficam com o responsável; novas ferramentas exigem autorização antes do download.
+O responsável autorizou publicar a demonstração do código atual para as avaliadoras usando Vercel e Supabase, escolheu a organização Supabase `jkelvindev` e limitou o custo a US$ 0/mês, sem recursos pagos. O ambiente local e os projetos anteriores devem ser preservados. Commit e push ficam com o responsável; novas ferramentas exigem autorização antes do download.
+
+Atualização em 12/11/2026: a avaliação passou a utilizar somente BIBI e MICAELLY. O perfil anterior foi desativado, sem remover a autoria histórica. Os resultados com três contas abaixo descrevem a publicação inicial, anterior a essa alteração.
 
 ## Decisão
 

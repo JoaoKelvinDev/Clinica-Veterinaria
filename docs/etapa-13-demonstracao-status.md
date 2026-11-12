@@ -14,32 +14,34 @@ Foram criados dois projetos na equipe Vercel `jkelvin`, com as raízes independe
 - A conexão Vercel exigiu consentimento específico para a equipe, concluído pelo responsável. A revisão automática inicialmente rejeitou reduzir a proteção SSO. Depois de os dois builds estarem prontos, o responsável autorizou explicitamente liberar a produção dos dois projetos, mantendo previews protegidos. A configuração final é `ssoProtection.deploymentType=preview`; o login Supabase e as permissões da aplicação continuam exigidos.
 - Auth do Supabase: `site_url=https://vetsys-demo.vercel.app` e redirecionamentos exatos para os dois aliases da interface. `config diff` foi revisado antes do push; somente essas duas propriedades foram alteradas. A conferência posterior retornou zero diferenças declaradas; as oito propriedades remotas não declaradas foram preservadas.
 
-Os arquivos individuais `.cache/acesso-bibi.txt`, `.cache/acesso-micaelly.txt` e `.cache/acesso-maria-carolline.txt` agora contêm o link público e os respectivos acessos hospedados. As versões locais anteriores foram preservadas em `.cache/acessos-locais-anteriores/`. O manifesto local original e o ambiente `.env` não foram substituídos. Não enviar o arquivo combinado para uma avaliadora, pois ele contém os três acessos.
+Os arquivos individuais atuais `.cache/acesso-bibi.txt` e `.cache/acesso-micaelly.txt` contêm o link público e os respectivos acessos hospedados. Em 12/11/2026, o perfil anterior foi desativado e seu arquivo de acesso foi retirado dos materiais atuais, conforme solicitação do responsável. As cópias anteriores foram preservadas em diretórios privados ignorados pelo Git. O manifesto local original e o ambiente `.env` não foram substituídos. Entregar somente o arquivo individual correspondente a cada avaliadora.
+
+Esta página registra a publicação inicial com três contas. A avaliação atual utiliza somente BIBI e MICAELLY; veja a [verificação atual dos perfis](perfis-avaliadoras-verificacao.md).
 
 ## Verificação da publicação
 
 Executada contra a interface pública e seu proxy `/api`, sem cookies de acesso da Vercel:
 
-| Verificação | Resultado observado |
-|---|---|
-| HTML, JavaScript e saúde pelo proxy | 200; configuração Auth hospedada e identificação de demonstração presentes |
-| Ausência de senha do banco e chave secreta no JS publicado | Confirmada |
-| Consulta de dados sem login | 401 |
-| Login e identidade BIBI, MICAELLY e MARIA CAROLLINE | 200; papel veterinário, CRMV TESTE e clínica esperados |
-| Dashboard e prontuário das três contas | 200; financeiro ausente do dashboard |
-| Administração e financeiro com contas veterinárias | 403 |
-| Administração e financeiro com administrador | 200 |
-| Upload e download de PDF fictício | 201/200; bytes idênticos |
-| Emissão de PDF de demonstração | 201; 46.564 bytes, legível em três páginas por `pypdf` |
-| ZIP pequeno | 200; 44.218 bytes, CRC válido, PDF idêntico e anexo presente |
-| Dois uploads de 4 MiB, em paciente de verificação separado | 201 para cada arquivo |
-| Download de anexo de 4 MiB | 200; SHA-256 idêntico |
-| ZIP com os dois anexos de 4 MiB | 200; 6.397.579 bytes, CRC e hashes dos anexos conferidos |
-| Isolamento RLS pelo papel restrito | Paciente visível na própria clínica, invisível em contexto estrangeiro e sem contexto após a transação |
-| Configuração serverless | Seis testes passaram novamente |
-| Build de demonstração e formatação frontend | Passaram novamente; builds remotos também concluídos |
-| Auditoria npm de produção | Zero vulnerabilidades retornadas por `npm audit --omit=dev --json` |
-| Logs de erro/fatal da API | Nenhum registro encontrado nas janelas de verificação consultadas |
+| Verificação                                                | Resultado observado                                                                                    |
+| ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| HTML, JavaScript e saúde pelo proxy                        | 200; configuração Auth hospedada e identificação de demonstração presentes                             |
+| Ausência de senha do banco e chave secreta no JS publicado | Confirmada                                                                                             |
+| Consulta de dados sem login                                | 401                                                                                                    |
+| Login e identidade das três contas iniciais                | 200; papel veterinário, CRMV TESTE e clínica esperados                                                 |
+| Dashboard e prontuário das três contas                     | 200; financeiro ausente do dashboard                                                                   |
+| Administração e financeiro com contas veterinárias         | 403                                                                                                    |
+| Administração e financeiro com administrador               | 200                                                                                                    |
+| Upload e download de PDF fictício                          | 201/200; bytes idênticos                                                                               |
+| Emissão de PDF de demonstração                             | 201; 46.564 bytes, legível em três páginas por `pypdf`                                                 |
+| ZIP pequeno                                                | 200; 44.218 bytes, CRC válido, PDF idêntico e anexo presente                                           |
+| Dois uploads de 4 MiB, em paciente de verificação separado | 201 para cada arquivo                                                                                  |
+| Download de anexo de 4 MiB                                 | 200; SHA-256 idêntico                                                                                  |
+| ZIP com os dois anexos de 4 MiB                            | 200; 6.397.579 bytes, CRC e hashes dos anexos conferidos                                               |
+| Isolamento RLS pelo papel restrito                         | Paciente visível na própria clínica, invisível em contexto estrangeiro e sem contexto após a transação |
+| Configuração serverless                                    | Seis testes passaram novamente                                                                         |
+| Build de demonstração e formatação frontend                | Passaram novamente; builds remotos também concluídos                                                   |
+| Auditoria npm de produção                                  | Zero vulnerabilidades retornadas por `npm audit --omit=dev --json`                                     |
+| Logs de erro/fatal da API                                  | Nenhum registro encontrado nas janelas de verificação consultadas                                      |
 
 A primeira tentativa de exportação retornou 422 porque o responsável fictício não possuía documento/endereço. O cadastro demonstrativo foi completado com o mesmo CPF fictício usado nos testes e endereço explicitamente fictício, e a emissão passou. Nenhuma regra foi relaxada. Os rascunhos MOCK não foram aprovados. Os testes acrescentaram um documento fictício e uma exportação ao primeiro paciente, além de um tutor/paciente identificado como verificação de limites, dois documentos grandes e sua exportação.
 
@@ -49,7 +51,7 @@ O comando `uv run --frozen pytest tests/test_serverless.py` encontrou bloqueio d
 
 ## Autorizações e configuração
 
-O responsável autorizou preparar e publicar uma demonstração na Vercel e no Supabase, com dados fictícios e as contas BIBI, MICAELLY e MARIA CAROLLINE no papel de veterinário, com CRMVs explicitamente TESTE. Escolheu a organização `jkelvindev` e confirmou o custo informado de **US$ 0/mês**, sem contratar recursos pagos. Downloads de ferramentas novas dependem de autorização; nenhuma foi instalada nesta preparação.
+O responsável autorizou preparar e publicar uma demonstração na Vercel e no Supabase, com dados fictícios e contas de avaliação no papel de veterinário, com CRMVs explicitamente TESTE. Escolheu a organização `jkelvindev` e confirmou o custo informado de **US$ 0/mês**, sem contratar recursos pagos. Downloads de ferramentas novas dependem de autorização; nenhuma foi instalada nesta preparação.
 
 Foi criado o projeto Supabase `vetsys-demo`, referência `qmkjdedkkxzchpqiijsq`, região `sa-east-1`, no plano gratuito. Os projetos anteriores da organização e a instância local foram preservados. A CLI já instalada foi vinculada somente em `.cache/vetsys-demo`, separada da configuração de desenvolvimento.
 
@@ -59,7 +61,7 @@ Foi criado o projeto Supabase `vetsys-demo`, referência `qmkjdedkkxzchpqiijsq`,
 - Papel `vetsys_app` com login e senha aleatória privada; sem superusuário, bypass de RLS ou herança. Conexão pelo pooler em modo transação, TLS obrigatório, prepared statements desativados no cliente serverless.
 - Cadastro público e login anônimo bloqueados; senha mínima de 12 caracteres. Alterações revisadas com `config diff` e limitadas ao projeto novo. A exigência TLS também foi ativada no banco.
 - Bucket `vetsys-documents` privado, para PDF/JPG/PNG, mantendo o limite de armazenamento de 10 MiB. O navegador continua acessando anexos através da API autenticada.
-- Administrador da demonstração e três contas de veterinário, sem envio de e-mails. CRMVs `TESTE-BIBI/PI`, `TESTE-MICAELLY/PI` e `TESTE-MARIA-CAROLLINE/PI`; não representam registros profissionais.
+- Inicialmente, administrador da demonstração e três contas de veterinário, sem envio de e-mails. Os CRMVs de avaliação são explicitamente TESTE e não representam registros profissionais. Atualmente somente BIBI e MICAELLY são veterinárias ativas.
 - Uma clínica explicitamente fictícia, três tutores fictícios, pacientes Luna/Nina/Thor (DEMO), um atendimento e um peso para cada paciente, três rascunhos MOCK pendentes e três produtos demonstrativos. Os rascunhos não foram aprovados nem convertidos em registros oficiais.
 - Os três logins foram verificados com Supabase Auth hospedado e uma API temporária em `127.0.0.1:8001`, conectada ao banco remoto com o papel restrito. Leitura de prontuário e ausência de dados financeiros no dashboard também foram verificadas. Isso ainda não comprova uma publicação funcional na Vercel.
 

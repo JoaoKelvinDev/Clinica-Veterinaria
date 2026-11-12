@@ -35,9 +35,9 @@ geram a auditoria normal do sistema, e os logins atualizam a atividade de Auth.
 
 A conferência posterior no banco confirmou 4 perfis, 3 identidades Auth,
 8 pacientes ativos, 12 agendamentos, 3 rascunhos pendentes, zero aprovados,
-zero registros clínicos oficiais e 6 lançamentos financeiros. Maria continua
-sem identidade de login, como decidido anteriormente; não foi testado ou
-restaurado o acesso dela.
+zero registros clínicos oficiais e 6 lançamentos financeiros. O perfil anterior
+continua sem identidade de login, como decidido anteriormente; seu acesso não
+foi testado ou restaurado.
 
 Não foram tentadas ações de escrita para testar bloqueios, nem fluxos de
 aprovação clínica, logout ou renovação de sessão. A verificação comprova os
@@ -60,3 +60,31 @@ Resultado detalhado em `.cache/teste-perfis-2026-11-12/resultado.json`.
 O script lê as credenciais dos arquivos privados existentes e não as imprime.
 Não foram instaladas ferramentas, alterado código do produto ou feito deploy,
 commit ou push.
+
+## Retirada do perfil anterior da avaliação — 12/11/2026
+
+Após a conferência manual inicial, o responsável pediu manter somente BIBI e
+MICAELLY na avaliação. O perfil anterior foi desativado por
+`PATCH /api/users/{id}` com `active=false`, usando o administrador e as regras
+existentes. Seu nome e CRMV foram preservados para manter a autoria histórica.
+
+Uma nova verificação HTTP passou em **18 checagens**: identidade administrativa,
+alteração restrita à situação do perfil alvo, login e identidade das duas
+avaliadoras, lista `/api/veterinarians` somente com BIBI e MICAELLY, oito pacientes
+ativos, dashboard sem financeiro e bloqueios de administração/financeiro.
+
+O manifesto hospedado e o arquivo combinado privado agora contêm somente as
+duas avaliadoras. O arquivo individual retirado foi movido para a cópia privada
+ignorada pelo Git. Senhas e acessos das avaliadoras permaneceram iguais.
+
+O banco confirmou quatro perfis preservados, dos quais um inativo, e três
+identidades Auth. Os hashes das linhas de atendimentos, registros clínicos,
+pesos, vacinas, documentos, exportações e rascunhos permaneceram iguais antes
+e depois. A auditoria anterior também foi preservada. O contador continua em
+quatro atendimentos abertos, incluindo um histórico com paciente arquivado.
+
+Script privado: `.cache/retirar-perfil-avaliacao.mjs`. Evidência:
+`.cache/perfis-avaliacao-2026-11-12/resultado.json`. A alteração está no Supabase
+hospedado e não exige deploy. Não foi alterado código do produto nem repetida
+a suíte completa de frontend/backend. Esta verificação foi HTTP e SQL;
+a ausência na lista visual deverá ser conferida ao atualizar a aplicação.

@@ -10,7 +10,7 @@ detalhados, preservando os perfis. Aprovou arquivar os cadastros antigos e criar
 pendentes, 4 orçamentos, 8 produtos com lotes/alertas e 6 lançamentos financeiros.
 
 Antes da execução foram encontrados quatro perfis no sistema e três identidades
-no Supabase Auth. O perfil MARIA CAROLLINE estava sem identidade de login. O
+no Supabase Auth. Um perfil anterior estava sem identidade de login. O
 responsável escolheu explicitamente manter esse estado e redistribuir os
 exemplos entre BIBI e MICAELLY.
 
@@ -24,7 +24,7 @@ exemplos entre BIBI e MICAELLY.
   possuem acesso disponível.
 - Preservar documentos, exportações, pesos, auditoria e histórico. Não apagar
   fisicamente registros nem contornar as regras append-only.
-- Preservar o atendimento antigo de Maria em aberto: sua conclusão exige o
+- Preservar o atendimento antigo do perfil sem login em aberto: sua conclusão exige o
   veterinário responsável. Não impersonar o perfil nem alterar a autorização.
 - Marcar todos os novos exemplos como DEMO/fictícios. Telefones, documentos,
   endereços, identificadores e valores são sintéticos. Consentimentos existentes
@@ -37,9 +37,18 @@ exemplos entre BIBI e MICAELLY.
 ## Consequências
 
 As listas ativas mostram o novo conjunto, e os históricos antigos continuam
-preservados. Há 3 novos atendimentos abertos e 1 antigo de Maria, totalizando
+preservados. Há 3 novos atendimentos abertos e 1 antigo com paciente arquivado, totalizando
 4 no dashboard. Somente BIBI e MICAELLY têm login de avaliadora disponível;
-o perfil de Maria continua no sistema, sem restauração do Auth.
+o perfil anterior continua no sistema, sem restauração do Auth.
+
+### Ajuste solicitado após a conferência manual — 12/11/2026
+
+O responsável pediu retirar o perfil anterior da avaliação, mantendo somente
+BIBI e MICAELLY. Foi aplicado `active=false` pela API administrativa existente;
+a lista de veterinários passa a conter apenas as duas avaliadoras. Nome, CRMV,
+vínculos e autoria históricos foram preservados. O acesso anterior foi retirado
+dos materiais privados atuais e guardado na cópia de histórico ignorada pelo Git.
+Não houve mudança de senha, Auth, papel, regra de negócio, schema ou deploy.
 
 A alteração dos dados é visível no sistema hospedado ao atualizar as listas;
 não depende de uma nova implantação. Não foi alterado o banco local, não houve
